@@ -1,0 +1,529 @@
+<div id="app">
+    <!-- <div id="container-header"> 
+      TAB ORDER ANNOTATION
+    </div> -->
+    <div id="container-labels">
+      <div id="order">Order</div>
+      <div id="name">Name</div>
+      <button id="button-add">Add</button>
+      <div id="tab-help"> 
+          &#8593; <span class="keyboard-mini">Shift</span> + <span class="keyboard-mini">Tab</span> 
+          &nbsp; &nbsp; &nbsp; 
+          &darr; <span class="keyboard-mini">Tab</span> 
+      </div>
+
+    </div>
+    <div id="zero-state">
+        <p>
+          <b>Getting Started</b>
+        </p>
+        <p>
+          <span id="add-mini">Add</span>  a focus order annotation to each layer that is selected. Annotations will auto-update their position, name, and order as you make changes in the Figma file. 
+        </p>
+        <p>
+          <span id="update-mini">Tab through</span> your focus order to see if your current path makes sense.
+        </p>
+        <p>
+          <span id="annotation-mini">!</span> Once you close this plugin, you will have to make changes to your annotations directly in the annotation layer.
+        </p>
+    </div>
+    <button id="button-refresh">Tab through</button>
+</div>
+
+<script>
+var exports = {}; 
+var totalFocus = 0; 
+var focusedIDs = []; 
+var curTabID = ""; 
+
+// instructions when pane is empty
+function checkZeroState() {
+  var divs = document.getElementsByClassName("focus-object"); 
+  document.getElementById("zero-state").hidden = (divs.length > 0); 
+}
+
+
+// styling for affordances on drag over
+function dragOver(ev) {
+  ev.preventDefault();
+  var topY = ev.currentTarget.getBoundingClientRect().top; 
+  var bottomY = ev.currentTarget.getBoundingClientRect().bottom; 
+  var midY = (topY + bottomY) / 2; 
+  var hoverPoint = ev.clientY < midY; 
+
+  ev.currentTarget.style.borderTopColor = hoverPoint ? "#1DA0FB" : "#EFEFEF"; 
+  ev.currentTarget.style.borderTopWidth = hoverPoint ? "3px" : "1px"; 
+  ev.currentTarget.style.borderBottomColor = hoverPoint ? "#EFEFEF" : "#1DA0FB"; 
+  ev.currentTarget.style.borderBottomWidth = hoverPoint ? "1px" : "3px"; 
+}
+
+// determine where focus annotation gets dropped
+function drop(ev) {
+  ev.preventDefault(); 
+  var data = ev.dataTransfer.getData("text");
+  var toDrop = document.getElementById(data); 
+  var topY = ev.currentTarget.getBoundingClientRect().top; 
+  var bottomY = ev.currentTarget.getBoundingClientRect().bottom; 
+  var midY = (topY + bottomY) / 2; 
+  var hoverPoint = ev.clientY < midY; 
+  
+  (document.getElementById("app")).insertBefore(toDrop, (hoverPoint) ? ev.currentTarget : ev.currentTarget.nextSibling); 
+
+  toDrop.style.borderTopColor = "#EFEFEF"; 
+  ev.currentTarget.style.borderTopColor = "#EFEFEF"; 
+  ev.currentTarget.style.borderTopWidth = "1px"; 
+  toDrop.style.borderBottomColor = "#EFEFEF"; 
+  ev.currentTarget.style.borderBottomColor = "#EFEFEF"; 
+  ev.currentTarget.style.borderBottomWidth = "1px"; 
+
+  resort(); 
+}
+
+function dragStart(ev) {
+  ev.dataTransfer.setData("text", ev.target.id); 
+}
+
+// styling reset
+function dragLeave(ev) {
+  ev.preventDefault(); 
+  var curTarget = ev.currentTarget; 
+  curTarget.style.borderTopColor = "#EFEFEF"; 
+  curTarget.style.borderTopWidth = "1px"; 
+  curTarget.style.borderBottomColor = "#EFEFEF"; 
+  curTarget.style.borderBottomWidth = "1px"; 
+}
+
+// resort when objects are removed, moved, or added 
+function resort() {
+  focusedIDs = []; 
+  var focusObjects = document.getElementsByClassName("focus-object"); 
+  var focusOrder = 1; 
+
+  // iterate through all objects 
+  for (let obj of focusObjects) {
+    var objElements = obj.getElementsByTagName("div"); 
+    focusedIDs.push(obj.id); 
+
+    // iterate through div tags
+    for (let div of objElements) {
+      if (div.className == "order") {
+        var prevNumber = div.innerHTML; 
+        div.innerHTML = focusOrder; 
+        reannotateFocus(obj.id, prevNumber, focusOrder); 
+        focusOrder += 1; 
+      }
+    }
+  }
+}
+
+// remove an item from the focus list 
+function removeFocusUI(ID) {
+  focusedIDs = focusedIDs.filter((id) => {return id != ID}); 
+  document.getElementById(ID).remove(); 
+  totalFocus -= 1;
+  removeFocusAnnotation(ID); 
+  checkZeroState(); 
+  resort(); 
+}
+
+function createFocusUI(selectionName, selectionID) {
+  // you can only add a node once 
+  if (focusedIDs.includes(selectionID)) {
+    return; 
+  }
+
+  focusedIDs.push(selectionID); 
+
+  // create the new object 
+  var newFocus = document.createElement("div"); 
+  newFocus.className = "focus-object"; 
+  newFocus.id = selectionID; 
+  newFocus.draggable = true; 
+  newFocus.ondragstart = () => {dragStart(event)}; 
+  newFocus.ondragleave = () => {dragLeave(event)}; 
+  newFocus.ondragover = () => {dragOver(event)}; 
+  newFocus.ondrop = () => {drop(event)}; 
+  newFocus.onclick = () => {showFocus(selectionID)}; 
+  newFocus.onfocus = () => {showFocus(selectionID)}; 
+  
+  // create move icon
+  var moveIcon = document.createElement("div"); 
+  moveIcon.className = "move-icon"; 
+  for (i = 0; i < 6; i++) {
+    var moveIconDot = document.createElement("div"); 
+    moveIconDot.className = "move-icon-dot"; 
+    moveIcon.appendChild(moveIconDot); 
+  }
+
+  // create order number
+  var orderNumber = document.createElement("div"); 
+  orderNumber.className = "order";
+  orderNumber.innerHTML = totalFocus + 1; 
+  
+  // create name
+  var name = document.createElement("div"); 
+  name.className = "name"; 
+  name.innerHTML = selectionName; 
+  
+  // create remove button
+  var removeButton = document.createElement("button"); 
+  removeButton.className = "button-remove"; 
+  removeButton.innerHTML = "Remove"; 
+  removeButton.onclick = () => { removeFocusUI(selectionID) }; 
+
+  // add everything into the larger div
+  newFocus.appendChild(moveIcon);
+  newFocus.appendChild(orderNumber);  
+  newFocus.appendChild(name);
+  newFocus.appendChild(removeButton);  
+  
+  // add larger div into the plugin pane, annotate and check for zero state 
+  document.getElementById('app').appendChild(newFocus); 
+  annotateFocus(selectionID, totalFocus+1); 
+  checkZeroState(); 
+  totalFocus += 1; 
+}
+
+//////////////////////////////
+////// calls to parent //////
+//////////////////////////////
+
+function annotateFocus(selectionID, orderNumber) {
+  parent.postMessage({ pluginMessage: {type: 'create-annotationUI', id: selectionID, number: orderNumber}}, '*'); 
+}
+
+function reannotateFocus(selectionID, prevOrderNumber, nextOrderNumber) {
+  parent.postMessage({ pluginMessage: {type: 'renumber-annotationUI', id: selectionID, prevNumber: prevOrderNumber, nextNumber: nextOrderNumber}}, '*'); 
+}
+
+function removeFocusAnnotation(selectionID) {
+  parent.postMessage({ pluginMessage: {type: 'remove-annotationUI', id: selectionID}}, '*'); 
+}
+
+
+function showFocus(selectionID) {
+  // revert previous selected tab
+  var curTab = document.getElementById(curTabID); 
+  if (curTab != null) {
+    curTab.className = "focus-object"; 
+  }
+
+  var classNew = document.getElementById(selectionID).className.concat(" tab-on"); 
+  document.getElementById(selectionID).className = classNew; 
+  curTabID = selectionID; 
+  parent.postMessage({ pluginMessage: {type: 'select-annotationUI', id: selectionID}}, '*'); 
+}
+
+document.getElementById('tab-help').hidden = true;
+document.getElementById('button-add').onclick = () => {
+  parent.postMessage({ pluginMessage: {type: 'add-focus'}}, '*'); 
+}
+
+document.getElementById('button-refresh').onclick = () => {
+
+  if (focusedIDs.length > 0) 
+  {
+    var buttonRefresh = document.getElementById('button-refresh'); 
+    var removeButtons = document.getElementsByClassName('button-remove'); 
+    var foci = document.getElementsByClassName('focus-object'); 
+    switch (buttonRefresh.innerHTML) {
+      case "Tab through":
+        buttonRefresh.innerHTML = "Exit tabbing"; 
+        buttonRefresh.className = "button-refresh-exit"; 
+        document.getElementById('button-add').hidden = true; 
+        document.getElementById('tab-help').hidden = false; 
+
+        for (let b of removeButtons) {b.hidden = true;}
+
+        var i = 1; 
+        for (let f of foci) {
+          f.tabIndex = i; 
+          if (i == 1) {
+            f.focus(); 
+          }
+          i++; 
+        }
+        break; 
+      case "Exit tabbing": 
+        buttonRefresh.innerHTML = "Tab through"; 
+        buttonRefresh.className = ""; 
+        document.getElementById('tab-help').hidden = true; 
+        document.getElementById('button-add').hidden = false; 
+        document.getElementById('button-add').hidden = false; 
+        for (let b of removeButtons) {b.hidden = false;}
+        for (let f of foci) {
+          f.tabIndex = -1;
+          f.className = "focus-object"; 
+        }
+        break; 
+    }
+  }
+
+}
+
+if (!document.hasFocus()) { 
+  for (let selectionID of focusedIDs) {
+    parent.postMessage({ pluginMessage: {type: 'refresh-annotationUI', id: selectionID}}, '*'); 
+  }
+}
+
+window.addEventListener('focus', () => {
+  for (let selectionID of focusedIDs) {
+    parent.postMessage({ pluginMessage: {type: 'refresh-annotationUI', id: selectionID}}, '*'); 
+  }
+});
+
+//////////////////////////////////
+////// messages from parent //////
+//////////////////////////////////
+
+onmessage = (event) => {
+  var message = event.data.pluginMessage; 
+  if (message.type === 'add-focus') {
+    var names = message.names; 
+    var ids = message.ids; 
+
+    while (names.length > 0) {
+      var name = names.shift(); 
+      var id = ids.shift(); 
+      createFocusUI(name, id); 
+    } 
+  } else if (message.type === 'node-rename') {
+    var divs = document.getElementById(message.id).getElementsByTagName("div"); 
+
+    for (let div of divs) {
+      if (div.className == "name") {
+        div.innerHTML = message.nodeName; 
+      }
+    }
+  } else if (message.type === 'node-remove') {
+    removeFocusUI(message.id); 
+  }
+}
+
+//////////////////////////////////
+////// prototyping test //////
+//////////////////////////////////
+
+document.addEventListener("keydown", (e) => handleKeyDown(e)); 
+function handleKeyDown(e) {
+  console.log(e); 
+
+  if (e.key == "Tab"){
+    console.log("tab press detected"); 
+  }
+}
+
+</script>
+<style>
+  #app {
+    width: 100%; 
+    position: absolute; 
+    top: 0px; 
+    left: 0px; 
+    padding-bottom: 50px; 
+    font-family: "Segoe UI"; 
+    font-size: 12px; 
+  }
+
+  #container-header {
+      background-color: #222222; 
+      padding: 10px 0px; 
+      color: white; 
+      text-transform: 'uppercase'; 
+      text-align: center; 
+      font-weight: 500; 
+  }
+
+  #container-labels {
+    position: sticky; 
+    top: 0; 
+    background-color: #2C2C2C; 
+    padding: 10px 5px; 
+    display: grid; 
+    grid-template-columns: 50px 60px auto 70px; 
+    color: white; 
+    font-weight: 400;  
+  }
+
+  #order, #name {
+    grid-column-start: 2; 
+    display: flex; 
+    flex-direction: row; 
+    align-items: center; 
+  }
+
+  #order {
+    grid-column-start: 2; 
+  }
+  #name {
+    grid-column-start: 3; 
+  }
+
+  #tab-help {
+    position: absolute; 
+    right: 10px; 
+    top: 8px; 
+    margin-top: 2px; 
+    margin-bottom: 2px; 
+  }
+
+  .keyboard-mini {
+    padding: 1px 3px 2px 3px; 
+    border-radius: 4px; 
+    background-color: #6B6B6B; 
+    color: white; 
+    margin-right: 2px; 
+    font-weight: normal; 
+
+  }
+
+ /* ///////////////////////// */
+  /* // ZERO STATE STYLING ////*/
+  /* ///////////////////////// */
+
+  #zero-state {
+    line-height: 20px; 
+    padding: 50px; 
+  }
+
+  #add-mini {
+    background-color: #2C2C2C; 
+    padding: 2px 15px 3px 15px; 
+    border-radius: 4px; 
+    color: white; 
+    margin-right: 5px; 
+  }
+
+  #update-mini {
+    padding: 2px 15px 3px 15px; 
+    border-radius: 4px; 
+    background-color: #1DA0FB; 
+    color: white; 
+    margin-right: 5px; 
+  }
+
+  #annotation-mini {
+    padding: 2px 9px 3px 9px; 
+    border-radius: 4px; 
+    background-color: #B51077; 
+    color: white; 
+    margin-right: 5px; 
+  }
+   /* //////////////////////////////// */
+  /* // ANNOTATION OBJECT STYLING ////*/
+  /* //////////////////////////////// */
+
+
+  .focus-object {
+    padding: 15px 5px; 
+    border-bottom: 1px solid #EFEFEF; 
+    border-top: 1px solid #EFEFEF; 
+    font-weight: normal; 
+    display: grid; 
+    grid-template-columns: 50px 60px auto 70px; 
+  }
+
+  .tab-on {
+     font-weight: bold; 
+  }
+
+  .move-icon {
+    width: 20px; 
+    grid-column-start: 1; 
+    max-height: 36px; 
+  
+    display: flex; 
+    flex-direction: row;
+    flex-wrap: wrap; 
+    justify-content: space-between; 
+  }
+
+  .move-icon:hover {
+    cursor: move; 
+  }
+  
+  .move-icon-dot {
+    width: 4px; 
+    height: 4px; 
+    margin: 3px;
+    border-radius: 300px; 
+    background-color: #C4C4C4; 
+  }
+
+  .order, .name {
+    display: flex; 
+    flex-direction: row; 
+    align-items: center; 
+  }
+
+  .order {
+    grid-column-start: 2; 
+  }
+
+  .name {
+    grid-column-start: 3; 
+  }
+
+  /* /////////////////////// */
+  /* // BUTTON STYLING ////*/
+  /* /////////////////////// */
+
+
+  #button-refresh, #button-add, .button-remove {
+    color: white; 
+    font-weight: 400; 
+    border-radius: 5px; 
+    box-shadow: none; 
+    cursor: pointer; 
+    border: 1px solid white; 
+    max-height: 30px; 
+  }
+
+  #button-refresh {
+    grid-column-start: 1; 
+    margin: 10px; 
+    height: 30px; 
+    width:calc(100% - 20px); 
+    position: fixed; 
+    bottom: 0px; 
+  }
+  #button-refresh {
+    background-color: #1DA0FB; 
+  }
+  .button-refresh-exit {
+    background-color: #F36969 !important; 
+  }
+
+  #button-add {
+    grid-column-start: 4; 
+    background-color: #2C2C2C; 
+    margin: 2px 2px 1px 2px; 
+  }
+
+  #button-add:hover {
+    color: #2C2C2C; 
+    border-color: #2C2C2C; 
+    background-color: white; 
+    outline: none; 
+  }
+
+  .button-remove {
+    grid-column-start: 4; 
+    background-color: #1DA0FB; 
+    border: 1px solid #1DA0FB; 
+    margin: 2px 2px 1px 2px; 
+  }
+
+  .button-remove:hover, #button-refresh:hover {
+    background-color: #1389DB; 
+    border-color: #1389DB; 
+    outline: none; 
+  }
+
+  .button-refresh-exit:hover {
+    background-color: #E45353 !important; 
+    border-color: #E45353 !important; 
+  }
+
+</style>
