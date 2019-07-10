@@ -56,96 +56,106 @@ figma.ui.onmessage = async (msg) => {
     
     if (selections.length > 0) {
       for (let selection of selections) {
-        names.push(selection.name); 
-        ids.push(selection.id); 
+        if (selection.getSharedPluginData("a11y", "type") != "annotation") {
+          names.push(selection.name); 
+          ids.push(selection.id); 
+        } 
       }
   
       message = { 
         type: msg.type, 
         names: names,
-        ids: ids
+        ids: ids,
       }; 
     }
   } else if (msg.type === 'create-annotationUI') {
     
     var nodeToAnnotate = <FrameNode> figma.getNodeById(msg.id); 
+    if (nodeToAnnotate.getSharedPluginData("a11y", "type") !== "annotation") {
+      
+      var rect = figma.createRectangle(); 
+      rect.resize(annotationWidth, annotationWidth); 
+      rect.cornerRadius = 4; 
+      rect.strokeWeight = 2; 
+      rect.strokes = [{
+        color: {r: 1, g: 1, b: 1},
+        opacity: 1,
+        type: "SOLID",
+        visible: true}]
+      
+      rect.x = nodeToAnnotate.x - rect.width; 
+      rect.y = nodeToAnnotate.y; 
+      rect.fills = [{type: 'SOLID', color: {r: 0, g: 0, b: 0}}];
+      rect.name = "Background"; 
 
-    var rect = figma.createRectangle(); 
-    rect.resize(annotationWidth, annotationWidth); 
-    rect.cornerRadius = 4; 
-    rect.strokeWeight = 2; 
-    rect.strokes = [{
-      color: {r: 1, g: 1, b: 1},
-      opacity: 1,
-      type: "SOLID",
-      visible: true}]
-    
-    rect.x = nodeToAnnotate.x - rect.width; 
-    rect.y = nodeToAnnotate.y; 
-    rect.fills = [{type: 'SOLID', color: {r: .7, g: 0.06, b: 0.46}}];
-    rect.name = "Background"; 
+      var text = figma.createText(); 
+      await figma.loadFontAsync(text.fontName as FontName); 
+      text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
+      text.fontSize = 28;
+      text.x = rect.x + 9; 
+      text.y = rect.y + 5;  
+      text.characters = msg.number.toString(); 
+      text.name = "Order"; 
 
-    var text = figma.createText(); 
-    await figma.loadFontAsync(text.fontName as FontName); 
-    text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
-    text.fontSize = 28;
-    text.x = rect.x + 9; 
-    text.y = rect.y + 5;  
-    text.characters = msg.number.toString(); 
-    text.name = "Order"; 
+      var arrow = figma.createVector(); 
+      arrow.strokeWeight = 2;
+      arrow.strokes = [
+        {type: "SOLID",
+        visible: true,
+        opacity: 1, 
+        color: {r: 1, g: 1, b: 1}}
+      ]; 
+      arrow.vectorNetwork = {
+        regions: [],
+        segments: [{start: 0, end: 1}], 
+        vertices: [
+          {x: 0, y: 0, strokeCap: "ROUND", strokeJoin: "MITER"},
+          {x: 41, y: 0, strokeCap: "ARROW_LINES", strokeJoin: "MITER"}
+        ]
+      }; 
+      arrow.x = rect.x + 10; 
+      arrow.y = rect.y + 45;  
+      arrow.name = "arrow"; 
 
-    var arrow = figma.createVector(); 
-    arrow.strokeWeight = 2;
-    arrow.strokes = [
-      {type: "SOLID",
-      visible: true,
-      opacity: 1, 
-      color: {r: 1, g: 1, b: 1}}
-    ]; 
-    arrow.vectorNetwork = {
-      regions: [],
-      segments: [{start: 0, end: 1}], 
-      vertices: [
-        {x: 0, y: 0, strokeCap: "ROUND", strokeJoin: "MITER"},
-        {x: 41, y: 0, strokeCap: "ARROW_LINES", strokeJoin: "MITER"}
-      ]
-    }; 
-    arrow.x = rect.x + 10; 
-    arrow.y = rect.y + 45;  
-    arrow.name = "arrow"; 
+      var arrow2 = figma.createLine(); 
+      arrow2.strokeWeight = 2;
+      arrow2.strokes = [
+        {type: "SOLID",
+        visible: true,
+        opacity: 1, 
+        color: {r: 1, g: 1, b: 1}}
+      ]; 
+      arrow2.resize(14, 0); 
+      arrow2.strokeCap = "ROUND"; 
+      arrow2.rotation = -90; 
+      arrow2.x = arrow.x + 41; 
+      arrow2.y = arrow.y - 7; 
 
-    var arrow2 = figma.createLine(); 
-    arrow2.strokeWeight = 2;
-    arrow2.strokes = [
-      {type: "SOLID",
-      visible: true,
-      opacity: 1, 
-      color: {r: 1, g: 1, b: 1}}
-    ]; 
-    arrow2.resize(14, 0); 
-    arrow2.strokeCap = "ROUND"; 
-    arrow2.rotation = -90; 
-    arrow2.x = arrow.x + 41; 
-    arrow2.y = arrow.y - 7; 
+      var tabStop = figma.group([arrow, arrow2], figma.currentPage); 
+      tabStop.name = "Tab stop icon"; 
 
-    var tabStop = figma.group([arrow, arrow2], figma.currentPage); 
-    tabStop.name = "Tab stop icon"; 
+      var annotation = figma.group([tabStop, text, rect], figma.currentPage); 
+      annotation.name = msg.number.toString(); 
 
-    var annotation = figma.group([tabStop, text, rect], figma.currentPage); 
-    annotation.name = msg.number.toString(); 
+      annotation.setSharedPluginData("a11y", "type", "annotation"); 
+      annotation.setSharedPluginData("a11y", "source", msg.id); 
+      nodeToAnnotate.setSharedPluginData("a11y", "type", "object"); 
+      nodeToAnnotate.setSharedPluginData("a11y", "annotation", annotation.id); 
 
-    annotationNodes.push(annotation); 
-    nodeIDToAnnotationNodeID.push([msg.id, annotation.id]); 
+      annotationNodes.push(annotation); 
+      nodeIDToAnnotationNodeID.push([msg.id, annotation.id]); 
 
-    // group all annotation nodes together
-    figma.currentPage.appendChild(annotation); 
-    groupAnnotations(); 
+      // group all annotation nodes together
+      figma.currentPage.appendChild(annotation); 
+      groupAnnotations(); 
+    }
 
   } else if (msg.type === 'renumber-annotationUI') {
 
     var id = msg.id; 
     var prevNum = msg.prevNumber;  
     var nextNum = msg.nextNumber;  
+
     var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
     var annotationNodeID = kvPair[0][1]; 
     var annotationNode = <FrameNode> figma.getNodeById(annotationNodeID); 
@@ -159,8 +169,9 @@ figma.ui.onmessage = async (msg) => {
     var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
     var annotationNodeID = kvPair[0][1]; 
     var annotationNode = <FrameNode> figma.getNodeById(annotationNodeID); 
-    annotationNode.remove(); 
-    annotationNodes = annotationNodes.filter((node) => {return node.id != annotationNode.id}); 
+
+    if (annotationNode != null) { annotationNode.remove(); }; 
+    annotationNodes = annotationNodes.filter((a) => {return a.id != annotationNodeID}); 
   } else if (msg.type === 'refresh-annotationUI') {
     var id = msg.id; 
     var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
@@ -168,7 +179,7 @@ figma.ui.onmessage = async (msg) => {
     var node = <FrameNode> figma.getNodeById(id);
     var annotationNode = <FrameNode> figma.getNodeById(annotationNodeID); 
 
-    if (node == null) {
+    if (node == null || annotationNode == null) {
       message = { 
         type: "node-remove", 
         id: id
@@ -184,9 +195,8 @@ figma.ui.onmessage = async (msg) => {
         id: id
       }; 
     }
-
-/////////// 
-// TODO: not receiving on parent end for some reason
+  } else if (msg.type === 'load-annotationUI') {
+    // TODO after attaching in metadata
   } else if (msg.type === 'select-annotationUI') {
     var nodeToSelect = figma.getNodeById(msg.id); 
     figma.currentPage.selection = [nodeToSelect]; 

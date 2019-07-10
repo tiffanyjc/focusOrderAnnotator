@@ -3,9 +3,11 @@
       TAB ORDER ANNOTATION
     </div> -->
     <div id="container-labels">
+      <!-- <button id="button-back">?</button> -->
       <div id="order">Order</div>
-      <div id="name">Name</div>
-      <button id="button-add">Add</button>
+      <div id="name">Selection Name</div>
+      <!-- <button id="button-add">Add</button> -->
+      <button id="button-refresh">Tab test</button>
       <div id="tab-help"> 
           &#8593; <span class="keyboard-mini">Shift</span> + <span class="keyboard-mini">Tab</span> 
           &nbsp; &nbsp; &nbsp; 
@@ -20,14 +22,15 @@
         <p>
           <span id="add-mini">Add</span>  a focus order annotation to each layer that is selected. Annotations will auto-update their position, name, and order as you make changes in the Figma file. 
         </p>
-        <p>
-          <span id="update-mini">Tab through</span> your focus order to see if your current path makes sense.
+        <p> 
+          <span id="update-mini">Tab test</span> your focus order to see if your current path makes sense.
         </p>
         <p>
           <span id="annotation-mini">!</span> Once you close this plugin, you will have to make changes to your annotations directly in the annotation layer.
         </p>
     </div>
-    <button id="button-refresh">Tab through</button>
+    <!-- <button id="button-refresh">Load selected annotation layer</button> -->
+    <button id="button-add">Add selection(s)</button>
 </div>
 
 <script>
@@ -40,6 +43,8 @@ var curTabID = "";
 function checkZeroState() {
   var divs = document.getElementsByClassName("focus-object"); 
   document.getElementById("zero-state").hidden = (divs.length > 0); 
+  // document.getElementById("button-back").hidden = (divs.length <= 0); 
+  document.getElementById("button-refresh").innerHTML = ((divs.length > 0) ? "Tab test" : "Load selected annotation layer" ); 
 }
 
 
@@ -208,33 +213,44 @@ function showFocus(selectionID) {
     curTab.className = "focus-object"; 
   }
 
-  var classNew = document.getElementById(selectionID).className.concat(" tab-on"); 
-  document.getElementById(selectionID).className = classNew; 
-  curTabID = selectionID; 
-  parent.postMessage({ pluginMessage: {type: 'select-annotationUI', id: selectionID}}, '*'); 
+  var selected = document.getElementById(selectionID); 
+  if (selected != null) {
+    var classNew = selected.className.concat(" tab-on"); 
+    document.getElementById(selectionID).className = classNew; 
+    curTabID = selectionID; 
+    parent.postMessage({ pluginMessage: {type: 'select-annotationUI', id: selectionID}}, '*'); 
+  }
 }
 
+// document.getElementById('button-back').hidden = true;
 document.getElementById('tab-help').hidden = true;
 document.getElementById('button-add').onclick = () => {
   parent.postMessage({ pluginMessage: {type: 'add-focus'}}, '*'); 
 }
 
+// document.getElementById('button-back').onclick = () => {
+//   var toggle = document.getElementById('zero-state').hidden; 
+//   document.getElementById('zero-state').hidden = !toggle; 
+//   document.getElementById('button-back').innerHTML =  (toggle) ? "X" : "?"; 
+// }
+
 document.getElementById('button-refresh').onclick = () => {
 
-  if (focusedIDs.length > 0) 
-  {
+  if (focusedIDs.length > 0) {
     var buttonRefresh = document.getElementById('button-refresh'); 
     var removeButtons = document.getElementsByClassName('button-remove'); 
+    var moveButtons = document.getElementsByClassName('move-icon'); 
     var foci = document.getElementsByClassName('focus-object'); 
     switch (buttonRefresh.innerHTML) {
-      case "Tab through":
-        buttonRefresh.innerHTML = "Exit tabbing"; 
+      case "Tab test":
+        buttonRefresh.innerHTML = "Exit"; 
         buttonRefresh.className = "button-refresh-exit"; 
         document.getElementById('button-add').hidden = true; 
-        document.getElementById('tab-help').hidden = false; 
-
-        for (let b of removeButtons) {b.hidden = true;}
-
+        document.getElementById('order').style.visibility = "hidden"; 
+        document.getElementById('name').style.visibility = "hidden"; 
+        document.getElementById('tab-help').hidden = false;
+        for (let m of moveButtons) {m.style.visibility = "hidden"; }; 
+        for (let b of removeButtons) {b.hidden = true;}; 
         var i = 1; 
         for (let f of foci) {
           f.tabIndex = i; 
@@ -244,12 +260,14 @@ document.getElementById('button-refresh').onclick = () => {
           i++; 
         }
         break; 
-      case "Exit tabbing": 
-        buttonRefresh.innerHTML = "Tab through"; 
+      case "Exit": 
+        buttonRefresh.innerHTML = "Tab test"; 
         buttonRefresh.className = ""; 
         document.getElementById('tab-help').hidden = true; 
         document.getElementById('button-add').hidden = false; 
-        document.getElementById('button-add').hidden = false; 
+        document.getElementById('order').style.visibility = "visible"; 
+        document.getElementById('name').style.visibility = "visible"; 
+        for (let m of moveButtons) {m.style.visibility = "visible"; }; 
         for (let b of removeButtons) {b.hidden = false;}
         for (let f of foci) {
           f.tabIndex = -1;
@@ -257,7 +275,9 @@ document.getElementById('button-refresh').onclick = () => {
         }
         break; 
     }
-  }
+  } else {
+    parent.postMessage({ pluginMessage: {type: 'load-annotationUI'}}, '*'); 
+  }; 
 
 }
 
@@ -347,11 +367,11 @@ function handleKeyDown(e) {
   }
 
   #order, #name {
-    grid-column-start: 2; 
     display: flex; 
     flex-direction: row; 
     align-items: center; 
   }
+
 
   #order {
     grid-column-start: 2; 
@@ -362,8 +382,8 @@ function handleKeyDown(e) {
 
   #tab-help {
     position: absolute; 
-    right: 10px; 
-    top: 8px; 
+    left: 10px; 
+    top: 12px; 
     margin-top: 2px; 
     margin-bottom: 2px; 
   }
@@ -388,14 +408,6 @@ function handleKeyDown(e) {
   }
 
   #add-mini {
-    background-color: #2C2C2C; 
-    padding: 2px 15px 3px 15px; 
-    border-radius: 4px; 
-    color: white; 
-    margin-right: 5px; 
-  }
-
-  #update-mini {
     padding: 2px 15px 3px 15px; 
     border-radius: 4px; 
     background-color: #1DA0FB; 
@@ -403,10 +415,18 @@ function handleKeyDown(e) {
     margin-right: 5px; 
   }
 
+  #update-mini {
+    background-color: #2C2C2C; 
+    padding: 2px 15px 3px 15px; 
+    border-radius: 4px; 
+    color: white; 
+    margin-right: 5px; 
+  }
+
   #annotation-mini {
     padding: 2px 9px 3px 9px; 
     border-radius: 4px; 
-    background-color: #B51077; 
+    background-color: #F36969; 
     color: white; 
     margin-right: 5px; 
   }
@@ -480,7 +500,19 @@ function handleKeyDown(e) {
     max-height: 30px; 
   }
 
-  #button-refresh {
+  #button-back {
+    grid-column-start: 1; 
+    padding-left: 5px; 
+    background-color: #2C2C2C; 
+    color: white; 
+    border: 1px solid white; 
+    font-weight: 500; 
+    border-radius: 999px; 
+    margin: 2px 2px 1px 2px; 
+    width: 21px; 
+  }
+
+  #button-add {
     grid-column-start: 1; 
     margin: 10px; 
     height: 30px; 
@@ -488,24 +520,25 @@ function handleKeyDown(e) {
     position: fixed; 
     bottom: 0px; 
   }
-  #button-refresh {
+  #button-add {
     background-color: #1DA0FB; 
   }
   .button-refresh-exit {
     background-color: #F36969 !important; 
   }
 
-  #button-add {
+  #button-refresh {
     grid-column-start: 4; 
     background-color: #2C2C2C; 
     margin: 2px 2px 1px 2px; 
   }
 
-  #button-add:hover {
+  #button-refresh:hover, #button-back:hover {
     color: #2C2C2C; 
     border-color: #2C2C2C; 
     background-color: white; 
     outline: none; 
+    cursor: pointer; 
   }
 
   .button-remove {
@@ -515,7 +548,7 @@ function handleKeyDown(e) {
     margin: 2px 2px 1px 2px; 
   }
 
-  .button-remove:hover, #button-refresh:hover {
+  .button-remove:hover, #button-add:hover {
     background-color: #1389DB; 
     border-color: #1389DB; 
     outline: none; 

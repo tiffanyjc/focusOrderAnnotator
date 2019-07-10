@@ -1,14 +1,10 @@
 /*
-To get the TypeScript compiler working:
+///////////////
+//// TODO ////
+//////////////
 
-1. Download Visual Studio Code if you haven't already: https://code.visualstudio.com/.
-2. Install the TypeScript compiler globally: `sudo npm install -g typescript`.
-3. Open this directory in Visual Studio Code.
-4. Compile TypeScript to JavaScript: Run the "Terminal > Run Build Task..." menu item,
-    then select "tsc: watch - tsconfig.json". You will have to do this again every time
-    you reopen Visual Studio Code.
+1. attach all focus orders in metadata
 
-That's it! Visual Studio Code will regenerate the JavaScript file every time you save.
 */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -46,14 +42,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-/*
-///////////////
-//// TODO ////
-//////////////
-
-1. attach all focus orders in metadata
-
-*/
 /////////////////////////
 //// CANVAS-WATCHER  ////
 /////////////////////////
@@ -98,8 +86,10 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                 if (selections.length > 0) {
                     for (_i = 0, selections_1 = selections; _i < selections_1.length; _i++) {
                         selection = selections_1[_i];
-                        names.push(selection.name);
-                        ids.push(selection.id);
+                        if (selection.getSharedPluginData("a11y", "type") != "annotation") {
+                            names.push(selection.name);
+                            ids.push(selection.id);
+                        }
                     }
                     message = {
                         type: msg.type,
@@ -107,10 +97,11 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                         ids: ids
                     };
                 }
-                return [3 /*break*/, 4];
+                return [3 /*break*/, 5];
             case 1:
-                if (!(msg.type === 'create-annotationUI')) return [3 /*break*/, 3];
+                if (!(msg.type === 'create-annotationUI')) return [3 /*break*/, 4];
                 nodeToAnnotate = figma.getNodeById(msg.id);
+                if (!(nodeToAnnotate.getSharedPluginData("a11y", "type") !== "annotation")) return [3 /*break*/, 3];
                 rect = figma.createRectangle();
                 rect.resize(annotationWidth, annotationWidth);
                 rect.cornerRadius = 4;
@@ -123,7 +114,7 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                     }];
                 rect.x = nodeToAnnotate.x - rect.width;
                 rect.y = nodeToAnnotate.y;
-                rect.fills = [{ type: 'SOLID', color: { r: .7, g: 0.06, b: 0.46 } }];
+                rect.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
                 rect.name = "Background";
                 text = figma.createText();
                 return [4 /*yield*/, figma.loadFontAsync(text.fontName)];
@@ -171,13 +162,18 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                 tabStop.name = "Tab stop icon";
                 annotation = figma.group([tabStop, text, rect], figma.currentPage);
                 annotation.name = msg.number.toString();
+                annotation.setSharedPluginData("a11y", "type", "annotation");
+                annotation.setSharedPluginData("a11y", "source", msg.id);
+                nodeToAnnotate.setSharedPluginData("a11y", "type", "object");
+                nodeToAnnotate.setSharedPluginData("a11y", "annotation", annotation.id);
                 annotationNodes.push(annotation);
                 nodeIDToAnnotationNodeID.push([msg.id, annotation.id]);
                 // group all annotation nodes together
                 figma.currentPage.appendChild(annotation);
                 groupAnnotations();
-                return [3 /*break*/, 4];
-            case 3:
+                _a.label = 3;
+            case 3: return [3 /*break*/, 5];
+            case 4:
                 if (msg.type === 'renumber-annotationUI') {
                     id = msg.id;
                     prevNum = msg.prevNumber;
@@ -195,8 +191,11 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                     kvPair = nodeIDToAnnotationNodeID.filter(function (kvPair) { return kvPair[0] == id; });
                     annotationNodeID = kvPair[0][1];
                     annotationNode = figma.getNodeById(annotationNodeID);
-                    annotationNode.remove();
-                    annotationNodes = annotationNodes.filter(function (node) { return node.id != annotationNode.id; });
+                    if (annotationNode != null) {
+                        annotationNode.remove();
+                    }
+                    ;
+                    annotationNodes = annotationNodes.filter(function (a) { return a.id != annotationNodeID; });
                 }
                 else if (msg.type === 'refresh-annotationUI') {
                     id = msg.id;
@@ -204,7 +203,7 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                     annotationNodeID = kvPair[0][1];
                     node = figma.getNodeById(id);
                     annotationNode = figma.getNodeById(annotationNodeID);
-                    if (node == null) {
+                    if (node == null || annotationNode == null) {
                         message = {
                             type: "node-remove",
                             id: id
@@ -220,15 +219,16 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                             id: id
                         };
                     }
-                    /////////// 
-                    // TODO: not receiving on parent end for some reason
+                }
+                else if (msg.type === 'load-annotationUI') {
+                    // TODO after attaching in metadata
                 }
                 else if (msg.type === 'select-annotationUI') {
                     nodeToSelect = figma.getNodeById(msg.id);
                     figma.currentPage.selection = [nodeToSelect];
                 }
-                _a.label = 4;
-            case 4:
+                _a.label = 5;
+            case 5:
                 ;
                 figma.ui.postMessage(message);
                 return [2 /*return*/];
