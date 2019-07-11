@@ -40,7 +40,7 @@ var _this = this;
 var annotationWidth = 60;
 var nodeIDToAnnotationNodeID = [];
 var annotationNodes = [];
-figma.showUI(__html__, { width: 350, height: 480 });
+figma.showUI(__html__, { width: 375, height: 480 });
 figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, function () {
     var message, names, ids, selections, _i, selections_1, selection, nodeToAnnotate, rect, text, arrow, arrow2, tabStop, annotation, id, prevNum, nextNum, kvPair, annotationNodeID, annotationNode, child, id, kvPair, annotationNodeID, annotationNode, id, kvPair, annotationNodeID, node, annotationNode, nodes, _a, nodeIDToAnnotationNodeID_1, kv, id, node, nodeToSelect, annotations, names, ids, _b, annotations_1, annotation_1, nodeID, node, order;
     return __generator(this, function (_c) {

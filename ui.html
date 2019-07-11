@@ -6,7 +6,6 @@
       <!-- <button id="button-back">?</button> -->
       <div id="order">Order</div>
       <div id="name">Selection Name</div>
-      <!-- <button id="button-add">Add</button> -->
       <button id="button-refresh">Tab test</button>
       <div id="tab-help"> 
           &#8593; <span class="keyboard-mini">Shift</span> + <span class="keyboard-mini">Tab</span> 
@@ -33,6 +32,7 @@
         </p>
     </div>
     <!-- <button id="button-refresh">Load selected annotation layer</button> -->
+
     <button id="button-load">Load selected annotation layer</button>
     <button id="button-add">Add selection(s) to new layer</button>
     
@@ -52,7 +52,8 @@ function checkZeroState() {
   document.getElementById("order").innerHTML = (divs.length > 0) ? "Order" : ""; 
   document.getElementById("name").innerHTML = (divs.length > 0) ? "Name" : ""; 
   // document.getElementById("button-back").hidden = (divs.length <= 0); 
-  document.getElementById("button-refresh").disabled = (divs.length <= 0); 
+  document.getElementById("button-refresh").hidden = (divs.length <= 0); 
+  document.getElementById("button-add").style.width = (divs.length > 0) ? "calc(100% - 25px)" : "calc((100% - 25px)/2)" ;
 }
 
 
@@ -64,9 +65,9 @@ function dragOver(ev) {
   var midY = (topY + bottomY) / 2; 
   var hoverPoint = ev.clientY < midY; 
 
-  ev.currentTarget.style.borderTopColor = hoverPoint ? "#0077CC" : "#EFEFEF"; 
+  ev.currentTarget.style.borderTopColor = hoverPoint ? "#1DA0FB" : "#EFEFEF"; 
   ev.currentTarget.style.borderTopWidth = hoverPoint ? "3px" : "1px"; 
-  ev.currentTarget.style.borderBottomColor = hoverPoint ? "#EFEFEF" : "#0077CC"; 
+  ev.currentTarget.style.borderBottomColor = hoverPoint ? "#EFEFEF" : "#1DA0FB"; 
   ev.currentTarget.style.borderBottomWidth = hoverPoint ? "1px" : "3px"; 
 }
 
@@ -233,7 +234,7 @@ function showFocus(selectionID) {
 
 document.getElementById("order").innerHTML = ""; 
 document.getElementById("name").innerHTML = ""; 
-document.getElementById('button-refresh').disabled = true;
+document.getElementById('button-refresh').hidden = true;
 document.getElementById('tab-help').hidden = true;
 document.getElementById('button-add').onclick = () => {
   parent.postMessage({ pluginMessage: {type: 'add-focus'}}, '*'); 
@@ -258,7 +259,7 @@ document.getElementById('button-refresh').onclick = () => {
     switch (buttonRefresh.innerHTML) {
       case "Tab test":
         parent.postMessage({ pluginMessage: {type: 'test-annotationUI'}}, '*'); 
-        buttonRefresh.innerHTML = "Exit"; 
+        buttonRefresh.innerHTML = "Exit test"; 
         buttonRefresh.className = "button-refresh-exit"; 
         document.getElementById('button-add').hidden = true; 
         document.getElementById('order').style.visibility = "hidden"; 
@@ -275,7 +276,7 @@ document.getElementById('button-refresh').onclick = () => {
           i++; 
         }
         break; 
-      case "Exit": 
+      case "Exit test": 
         buttonRefresh.innerHTML = "Tab test"; 
         buttonRefresh.className = ""; 
         document.getElementById('tab-help').hidden = true; 
@@ -359,12 +360,12 @@ onmessage = (event) => {
   #container-labels {
     position: sticky; 
     top: 0; 
-    background-color: #2C2C2C; 
+    background-color: white; 
     padding: 10px 5px; 
     display: grid; 
     grid-template-columns: 50px 60px auto 70px; 
-    color: white; 
-    font-weight: 400;  
+    color: #2C2C2C; 
+    font-weight: bold;  
   }
 
   #order, #name {
@@ -419,7 +420,7 @@ onmessage = (event) => {
   #add-mini {
     padding: 2px 10px 3px 10px; 
     border-radius: 4px; 
-    background-color: #0077CC; 
+    background-color: #1DA0FB; 
     color: white; 
     margin-right: 3px; 
   }
@@ -427,9 +428,9 @@ onmessage = (event) => {
   #load-mini {
     padding: 2px 7px 3px 7px; 
     border-radius: 4px; 
-    color: #0077CC; 
+    color: #1DA0FB; 
     background-color: white; 
-    border: 1px solid #0077CC; 
+    border: 1px solid #1DA0FB; 
     margin-right: 3px; 
   }
 
@@ -511,11 +512,11 @@ onmessage = (event) => {
   #button-refresh, #button-add, #button-load,#button-refresh:disabled:hover, .button-remove {
     color: white; 
     font-weight: 400; 
-    border-radius: 5px; 
+    border-radius: 10px; 
     box-shadow: none; 
     cursor: pointer; 
     border: 1px solid white; 
-    max-height: 30px; 
+    height: 30px; 
   }
 
   #button-refresh:disabled:hover, #button-add:disabled:hover {
@@ -538,27 +539,29 @@ onmessage = (event) => {
   #button-load {
     grid-column-start: 1; 
     margin: 10px; 
-    height: 30px; 
-    width:calc(100% - 20px); 
+    height: 35px; 
+    width:calc((100% - 25px)/2); 
     position: fixed; 
-    bottom: 40px; 
+    bottom: 0px; 
+    right: 0px; 
   }
   #button-add {
     grid-column-start: 1; 
     margin: 10px; 
-    height: 30px; 
-    width:calc(100% - 20px); 
+    height: 35px; 
+    width:calc((100% - 25px)/2); 
     position: fixed; 
     bottom: 0px; 
   }
   #button-add{
-    background-color: #0077CC; 
+    background-color: #1DA0FB; 
   }
+
 
   #button-load {
     background-color: white; 
-    color: #0077CC; 
-    border: 1px solid #0077CC; 
+    color: #1DA0FB; 
+    border: 1px solid #1DA0FB; 
   }
   .button-refresh-exit {
     background-color: #F36969 !important; 

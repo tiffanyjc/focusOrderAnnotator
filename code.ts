@@ -6,7 +6,7 @@ var annotationWidth = 60;
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
 
-figma.showUI(__html__, {width: 350, height: 480 });
+figma.showUI(__html__, {width: 375, height: 480 });
 figma.ui.onmessage = async (msg) => {
 
 
