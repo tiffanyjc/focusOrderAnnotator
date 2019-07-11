@@ -16,21 +16,26 @@
 
     </div>
     <div id="zero-state">
-        <p>
+        <!-- <p>
           <b>Getting Started</b>
+        </p> -->
+        <p>
+          <span id="add-mini">Add</span> annotations to objects. Annotations will auto-update their position, name, and order as you make changes to your designs. 
         </p>
         <p>
-          <span id="add-mini">Add</span>  a focus order annotation to each layer that is selected. Annotations will auto-update their position, name, and order as you make changes in the Figma file. 
+          <span id="load-mini">Load</span> an existing layer of annotations to continue making edits. 
         </p>
         <p> 
           <span id="update-mini">Tab test</span> your focus order to see if your current path makes sense.
         </p>
         <p>
-          <span id="annotation-mini">!</span> Once you close this plugin, you will have to make changes to your annotations directly in the annotation layer.
+          <span id="annotation-mini">!</span> This plugin uses metadata to link annotations to nodes, so loading manually-created annotation layers is not allowed. 
         </p>
     </div>
     <!-- <button id="button-refresh">Load selected annotation layer</button> -->
-    <button id="button-add">Add selection(s)</button>
+    <button id="button-load">Load selected annotation layer</button>
+    <button id="button-add">Add selection(s) to new layer</button>
+    
 </div>
 
 <script>
@@ -43,8 +48,11 @@ var curTabID = "";
 function checkZeroState() {
   var divs = document.getElementsByClassName("focus-object"); 
   document.getElementById("zero-state").hidden = (divs.length > 0); 
+  document.getElementById("button-load").hidden = (divs.length > 0); 
+  document.getElementById("order").innerHTML = (divs.length > 0) ? "Order" : ""; 
+  document.getElementById("name").innerHTML = (divs.length > 0) ? "Name" : ""; 
   // document.getElementById("button-back").hidden = (divs.length <= 0); 
-  document.getElementById("button-refresh").innerHTML = ((divs.length > 0) ? "Tab test" : "Load selected annotation layer" ); 
+  document.getElementById("button-refresh").disabled = (divs.length <= 0); 
 }
 
 
@@ -56,9 +64,9 @@ function dragOver(ev) {
   var midY = (topY + bottomY) / 2; 
   var hoverPoint = ev.clientY < midY; 
 
-  ev.currentTarget.style.borderTopColor = hoverPoint ? "#1DA0FB" : "#EFEFEF"; 
+  ev.currentTarget.style.borderTopColor = hoverPoint ? "#0077CC" : "#EFEFEF"; 
   ev.currentTarget.style.borderTopWidth = hoverPoint ? "3px" : "1px"; 
-  ev.currentTarget.style.borderBottomColor = hoverPoint ? "#EFEFEF" : "#1DA0FB"; 
+  ev.currentTarget.style.borderBottomColor = hoverPoint ? "#EFEFEF" : "#0077CC"; 
   ev.currentTarget.style.borderBottomWidth = hoverPoint ? "1px" : "3px"; 
 }
 
@@ -131,7 +139,7 @@ function removeFocusUI(ID) {
   resort(); 
 }
 
-function createFocusUI(selectionName, selectionID) {
+function createFocusUI(selectionName, selectionID, loading) {
   // you can only add a node once 
   if (focusedIDs.includes(selectionID)) {
     return; 
@@ -184,7 +192,8 @@ function createFocusUI(selectionName, selectionID) {
   
   // add larger div into the plugin pane, annotate and check for zero state 
   document.getElementById('app').appendChild(newFocus); 
-  annotateFocus(selectionID, totalFocus+1); 
+  if (!loading) {annotateFocus(selectionID, totalFocus+1); }; 
+  showFocus(selectionID); 
   checkZeroState(); 
   totalFocus += 1; 
 }
@@ -222,10 +231,15 @@ function showFocus(selectionID) {
   }
 }
 
-// document.getElementById('button-back').hidden = true;
+document.getElementById("order").innerHTML = ""; 
+document.getElementById("name").innerHTML = ""; 
+document.getElementById('button-refresh').disabled = true;
 document.getElementById('tab-help').hidden = true;
 document.getElementById('button-add').onclick = () => {
   parent.postMessage({ pluginMessage: {type: 'add-focus'}}, '*'); 
+}
+document.getElementById('button-load').onclick = () => {
+  parent.postMessage({ pluginMessage: {type: 'load-annotations'}}, '*'); 
 }
 
 // document.getElementById('button-back').onclick = () => {
@@ -243,6 +257,7 @@ document.getElementById('button-refresh').onclick = () => {
     var foci = document.getElementsByClassName('focus-object'); 
     switch (buttonRefresh.innerHTML) {
       case "Tab test":
+        parent.postMessage({ pluginMessage: {type: 'test-annotationUI'}}, '*'); 
         buttonRefresh.innerHTML = "Exit"; 
         buttonRefresh.className = "button-refresh-exit"; 
         document.getElementById('button-add').hidden = true; 
@@ -275,8 +290,6 @@ document.getElementById('button-refresh').onclick = () => {
         }
         break; 
     }
-  } else {
-    parent.postMessage({ pluginMessage: {type: 'load-annotationUI'}}, '*'); 
   }; 
 
 }
@@ -306,7 +319,7 @@ onmessage = (event) => {
     while (names.length > 0) {
       var name = names.shift(); 
       var id = ids.shift(); 
-      createFocusUI(name, id); 
+      createFocusUI(name, id, message.loading); 
     } 
   } else if (message.type === 'node-rename') {
     var divs = document.getElementById(message.id).getElementsByTagName("div"); 
@@ -321,18 +334,6 @@ onmessage = (event) => {
   }
 }
 
-//////////////////////////////////
-////// prototyping test //////
-//////////////////////////////////
-
-document.addEventListener("keydown", (e) => handleKeyDown(e)); 
-function handleKeyDown(e) {
-  console.log(e); 
-
-  if (e.key == "Tab"){
-    console.log("tab press detected"); 
-  }
-}
 
 </script>
 <style>
@@ -403,24 +404,41 @@ function handleKeyDown(e) {
   /* ///////////////////////// */
 
   #zero-state {
-    line-height: 20px; 
-    padding: 50px; 
+    line-height: 19px; 
+    padding: 35px 50px; 
+  }
+
+  #zero-state p {
+    padding-bottom: 8px; 
+    border-bottom: 1px solid #E4E3E3; 
+  }
+  #zero-state p:nth-child(4) {
+    border-bottom: none; 
   }
 
   #add-mini {
-    padding: 2px 15px 3px 15px; 
+    padding: 2px 10px 3px 10px; 
     border-radius: 4px; 
-    background-color: #1DA0FB; 
+    background-color: #0077CC; 
     color: white; 
-    margin-right: 5px; 
+    margin-right: 3px; 
+  }
+
+  #load-mini {
+    padding: 2px 7px 3px 7px; 
+    border-radius: 4px; 
+    color: #0077CC; 
+    background-color: white; 
+    border: 1px solid #0077CC; 
+    margin-right: 3px; 
   }
 
   #update-mini {
     background-color: #2C2C2C; 
-    padding: 2px 15px 3px 15px; 
+    padding: 2px 10px 3px 10px; 
     border-radius: 4px; 
     color: white; 
-    margin-right: 5px; 
+    margin-right: 3px; 
   }
 
   #annotation-mini {
@@ -428,7 +446,7 @@ function handleKeyDown(e) {
     border-radius: 4px; 
     background-color: #F36969; 
     color: white; 
-    margin-right: 5px; 
+    margin-right: 3px; 
   }
    /* //////////////////////////////// */
   /* // ANNOTATION OBJECT STYLING ////*/
@@ -490,7 +508,7 @@ function handleKeyDown(e) {
   /* /////////////////////// */
 
 
-  #button-refresh, #button-add, .button-remove {
+  #button-refresh, #button-add, #button-load,#button-refresh:disabled:hover, .button-remove {
     color: white; 
     font-weight: 400; 
     border-radius: 5px; 
@@ -498,6 +516,10 @@ function handleKeyDown(e) {
     cursor: pointer; 
     border: 1px solid white; 
     max-height: 30px; 
+  }
+
+  #button-refresh:disabled:hover, #button-add:disabled:hover {
+    cursor: default; 
   }
 
   #button-back {
@@ -512,6 +534,15 @@ function handleKeyDown(e) {
     width: 21px; 
   }
 
+
+  #button-load {
+    grid-column-start: 1; 
+    margin: 10px; 
+    height: 30px; 
+    width:calc(100% - 20px); 
+    position: fixed; 
+    bottom: 40px; 
+  }
   #button-add {
     grid-column-start: 1; 
     margin: 10px; 
@@ -520,17 +551,28 @@ function handleKeyDown(e) {
     position: fixed; 
     bottom: 0px; 
   }
-  #button-add {
-    background-color: #1DA0FB; 
+  #button-add{
+    background-color: #0077CC; 
+  }
+
+  #button-load {
+    background-color: white; 
+    color: #0077CC; 
+    border: 1px solid #0077CC; 
   }
   .button-refresh-exit {
     background-color: #F36969 !important; 
+    border: 1px solid #F36969 !important; 
   }
 
-  #button-refresh {
+  #button-refresh, #button-refresh:disabled:hover {
     grid-column-start: 4; 
     background-color: #2C2C2C; 
     margin: 2px 2px 1px 2px; 
+  }
+
+  #button-refresh:disabled {
+    opacity: .45; 
   }
 
   #button-refresh:hover, #button-back:hover {
@@ -543,20 +585,24 @@ function handleKeyDown(e) {
 
   .button-remove {
     grid-column-start: 4; 
-    background-color: #1DA0FB; 
-    border: 1px solid #1DA0FB; 
+    background-color: #F36969; 
+    border: 1px solid #F36969; 
     margin: 2px 2px 1px 2px; 
   }
-
-  .button-remove:hover, #button-add:hover {
-    background-color: #1389DB; 
-    border-color: #1389DB; 
+  #button-load:hover {
+    color: #1DA0FB; 
+    border: 1px solid #1DA0FB; 
+  }
+  #button-add:hover {
+    background-color: #1DA0FB; 
+    border-color: #1DA0FB; 
     outline: none; 
   }
 
-  .button-refresh-exit:hover {
+  .button-refresh-exit:hover, .button-remove:hover {
     background-color: #E45353 !important; 
     border-color: #E45353 !important; 
+    color: white !important; 
   }
 
 </style>

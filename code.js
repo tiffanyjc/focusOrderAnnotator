@@ -1,11 +1,6 @@
-/*
-///////////////
-//// TODO ////
-//////////////
-
-1. attach all focus orders in metadata
-
-*/
+/////////////////////////
+//// FEATURES        ////
+/////////////////////////
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -42,41 +37,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-/////////////////////////
-//// CANVAS-WATCHER  ////
-/////////////////////////
-var CanvasWatcher = /** @class */ (function () {
-    function CanvasWatcher() {
-        this.fps = 1000 / 15; // number of times you want to check and update objects per second
-        this.stopCallback = null;
-    }
-    CanvasWatcher.prototype.start = function (callback, stopCallback) {
-        this.id = setInterval(callback, this.fps);
-        if (stopCallback) {
-            this.stopCallback = stopCallback;
-        }
-    };
-    CanvasWatcher.prototype.stop = function () {
-        clearInterval(this.id);
-        if (this.stopCallback) {
-            this.stopCallback();
-        }
-        this.stopCallback = null;
-    };
-    return CanvasWatcher;
-}());
-/////////////////////////
-//// FEATURES        ////
-/////////////////////////
-var canvasWatcher = new CanvasWatcher();
 var annotationWidth = 60;
 var nodeIDToAnnotationNodeID = [];
 var annotationNodes = [];
 figma.showUI(__html__, { width: 350, height: 480 });
 figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, function () {
-    var message, names, ids, selections, _i, selections_1, selection, nodeToAnnotate, rect, text, arrow, arrow2, tabStop, annotation, id, prevNum, nextNum, kvPair, annotationNodeID, annotationNode, child, id, kvPair, annotationNodeID, annotationNode, id, kvPair, annotationNodeID, node, annotationNode, nodeToSelect;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+    var message, names, ids, selections, _i, selections_1, selection, nodeToAnnotate, rect, text, arrow, arrow2, tabStop, annotation, id, prevNum, nextNum, kvPair, annotationNodeID, annotationNode, child, id, kvPair, annotationNodeID, annotationNode, id, kvPair, annotationNodeID, node, annotationNode, nodes, _a, nodeIDToAnnotationNodeID_1, kv, id, node, nodeToSelect, annotations, names, ids, _b, annotations_1, annotation_1, nodeID, node, order;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
                 message = {};
                 if (!(msg.type === 'add-focus')) return [3 /*break*/, 1];
@@ -93,11 +61,12 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                     }
                     message = {
                         type: msg.type,
+                        loading: false,
                         names: names,
                         ids: ids
                     };
                 }
-                return [3 /*break*/, 5];
+                return [3 /*break*/, 8];
             case 1:
                 if (!(msg.type === 'create-annotationUI')) return [3 /*break*/, 4];
                 nodeToAnnotate = figma.getNodeById(msg.id);
@@ -119,7 +88,7 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                 text = figma.createText();
                 return [4 /*yield*/, figma.loadFontAsync(text.fontName)];
             case 2:
-                _a.sent();
+                _c.sent();
                 text.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
                 text.fontSize = 28;
                 text.x = rect.x + 9;
@@ -171,22 +140,28 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                 // group all annotation nodes together
                 figma.currentPage.appendChild(annotation);
                 groupAnnotations();
-                _a.label = 3;
-            case 3: return [3 /*break*/, 5];
+                _c.label = 3;
+            case 3: return [3 /*break*/, 8];
             case 4:
-                if (msg.type === 'renumber-annotationUI') {
-                    id = msg.id;
-                    prevNum = msg.prevNumber;
-                    nextNum = msg.nextNumber;
-                    kvPair = nodeIDToAnnotationNodeID.filter(function (kvPair) { return kvPair[0] == id; });
-                    annotationNodeID = kvPair[0][1];
-                    annotationNode = figma.getNodeById(annotationNodeID);
-                    annotationNode.name = nextNum.toString();
-                    child = annotationNode.children[1];
-                    child.characters = nextNum.toString();
-                    groupAnnotations();
-                }
-                else if (msg.type === 'remove-annotationUI') {
+                if (!(msg.type === 'renumber-annotationUI')) return [3 /*break*/, 7];
+                id = msg.id;
+                prevNum = msg.prevNumber;
+                nextNum = msg.nextNumber;
+                kvPair = nodeIDToAnnotationNodeID.filter(function (kvPair) { return kvPair[0] == id; });
+                annotationNodeID = kvPair[0][1];
+                annotationNode = figma.getNodeById(annotationNodeID);
+                if (!(annotationNode != null)) return [3 /*break*/, 6];
+                annotationNode.name = nextNum.toString();
+                child = annotationNode.children[1];
+                return [4 /*yield*/, figma.loadFontAsync(child.fontName)];
+            case 5:
+                _c.sent();
+                child.characters = nextNum.toString();
+                groupAnnotations();
+                _c.label = 6;
+            case 6: return [3 /*break*/, 8];
+            case 7:
+                if (msg.type === 'remove-annotationUI') {
                     id = msg.id;
                     kvPair = nodeIDToAnnotationNodeID.filter(function (kvPair) { return kvPair[0] == id; });
                     annotationNodeID = kvPair[0][1];
@@ -196,6 +171,8 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                     }
                     ;
                     annotationNodes = annotationNodes.filter(function (a) { return a.id != annotationNodeID; });
+                    annotationNodes = annotationNodes.filter(function (a) { return a != null; });
+                    nodeIDToAnnotationNodeID = nodeIDToAnnotationNodeID.filter(function (kv) { return kv[0] != id; });
                 }
                 else if (msg.type === 'refresh-annotationUI') {
                     id = msg.id;
@@ -220,15 +197,48 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                         };
                     }
                 }
-                else if (msg.type === 'load-annotationUI') {
-                    // TODO after attaching in metadata
+                else if (msg.type === 'test-annotationUI') {
+                    nodes = [];
+                    for (_a = 0, nodeIDToAnnotationNodeID_1 = nodeIDToAnnotationNodeID; _a < nodeIDToAnnotationNodeID_1.length; _a++) {
+                        kv = nodeIDToAnnotationNodeID_1[_a];
+                        id = kv[0];
+                        node = figma.getNodeById(id);
+                        nodes.push(node);
+                    }
+                    figma.viewport.scrollAndZoomIntoView(nodes);
                 }
                 else if (msg.type === 'select-annotationUI') {
                     nodeToSelect = figma.getNodeById(msg.id);
                     figma.currentPage.selection = [nodeToSelect];
                 }
-                _a.label = 5;
-            case 5:
+                else if (msg.type === 'load-annotations') {
+                    annotations = figma.currentPage.selection[0].children;
+                    names = new Array(annotations.length - 1);
+                    ids = new Array(annotations.length - 1);
+                    if (annotations.length > 0) {
+                        for (_b = 0, annotations_1 = annotations; _b < annotations_1.length; _b++) {
+                            annotation_1 = annotations_1[_b];
+                            if (annotation_1.getSharedPluginData("a11y", "type") != "annotation") {
+                                Error('Something is very wrong, this probably is not an annotation layer');
+                            }
+                            nodeID = annotation_1.getSharedPluginData("a11y", "source");
+                            node = figma.getNodeById(nodeID);
+                            order = parseInt(annotation_1.name);
+                            names[order - 1] = node.name;
+                            ids[order - 1] = node.id;
+                            nodeIDToAnnotationNodeID.push([node.id, annotation_1.id]);
+                            annotationNodes.push(annotation_1);
+                        }
+                        message = {
+                            type: "add-focus",
+                            loading: true,
+                            names: names,
+                            ids: ids
+                        };
+                    }
+                }
+                _c.label = 8;
+            case 8:
                 ;
                 figma.ui.postMessage(message);
                 return [2 /*return*/];

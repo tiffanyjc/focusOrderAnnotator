@@ -1,44 +1,7 @@
-/* 
-/////////////// 
-//// TODO ////
-//////////////
-
-1. attach all focus orders in metadata 
-
-*/ 
-
-
-/////////////////////////
-//// CANVAS-WATCHER  ////
-/////////////////////////
-
-class CanvasWatcher {
-
-  private id: number;
-  private fps = 1000 / 15; // number of times you want to check and update objects per second
-  private stopCallback: Function = null;
-
-  public start(callback: Function, stopCallback?: Function) {
-    this.id = setInterval(callback, this.fps);
-    if (stopCallback) {
-      this.stopCallback = stopCallback;
-    }
-  }
-
-  public stop() {
-    clearInterval(this.id);
-    if (this.stopCallback) {
-      this.stopCallback();
-    }
-    this.stopCallback = null;
-  }
-}
-
 /////////////////////////
 //// FEATURES        ////
 /////////////////////////
 
-let canvasWatcher = new CanvasWatcher();
 var annotationWidth = 60; 
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
@@ -64,6 +27,7 @@ figma.ui.onmessage = async (msg) => {
   
       message = { 
         type: msg.type, 
+        loading: false,
         names: names,
         ids: ids,
       }; 
@@ -159,11 +123,16 @@ figma.ui.onmessage = async (msg) => {
     var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
     var annotationNodeID = kvPair[0][1]; 
     var annotationNode = <FrameNode> figma.getNodeById(annotationNodeID); 
-    annotationNode.name = nextNum.toString(); 
-    var child = <TextNode> annotationNode.children[1];
-    child.characters = nextNum.toString(); 
 
-    groupAnnotations(); 
+    if (annotationNode != null) {
+      annotationNode.name = nextNum.toString(); 
+      var child = <TextNode> annotationNode.children[1];
+      await figma.loadFontAsync(child.fontName as FontName); 
+      child.characters = nextNum.toString();   
+      groupAnnotations(); 
+    }
+
+    
   } else if (msg.type === 'remove-annotationUI') {
     var id = msg.id; 
     var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
@@ -172,6 +141,8 @@ figma.ui.onmessage = async (msg) => {
 
     if (annotationNode != null) { annotationNode.remove(); }; 
     annotationNodes = annotationNodes.filter((a) => {return a.id != annotationNodeID}); 
+    annotationNodes = annotationNodes.filter((a) => {return a != null}); 
+    nodeIDToAnnotationNodeID = nodeIDToAnnotationNodeID.filter((kv) => {return kv[0] != id}); 
   } else if (msg.type === 'refresh-annotationUI') {
     var id = msg.id; 
     var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
@@ -195,11 +166,48 @@ figma.ui.onmessage = async (msg) => {
         id: id
       }; 
     }
-  } else if (msg.type === 'load-annotationUI') {
-    // TODO after attaching in metadata
+  } else if (msg.type === 'test-annotationUI') {
+    var nodes = []; 
+    for (let kv of nodeIDToAnnotationNodeID) {
+      var id = kv[0]; 
+      var node = <FrameNode> figma.getNodeById(id); 
+      nodes.push(node); 
+    }
+    figma.viewport.scrollAndZoomIntoView(nodes); 
   } else if (msg.type === 'select-annotationUI') {
     var nodeToSelect = figma.getNodeById(msg.id); 
     figma.currentPage.selection = [nodeToSelect]; 
+  } else if (msg.type === 'load-annotations') {
+    
+
+    // stopped here, need to figure out how to sort names and ids according to corect order 
+    var annotations = (<FrameNode> figma.currentPage.selection[0]).children; 
+    var names = new Array(annotations.length - 1); 
+    var ids = new Array(annotations.length - 1); 
+    
+    if (annotations.length > 0) {
+      for (let annotation of annotations) {
+        if (annotation.getSharedPluginData("a11y", "type") != "annotation") {
+          Error('Something is very wrong, this probably is not an annotation layer'); 
+        }
+        
+        var nodeID = annotation.getSharedPluginData("a11y", "source"); 
+        var node =  <FrameNode> figma.getNodeById(nodeID); 
+        var order = parseInt(annotation.name); 
+        names[order - 1] = node.name; 
+        ids[order - 1] = node.id; 
+
+        nodeIDToAnnotationNodeID.push([node.id, annotation.id]); 
+        annotationNodes.push(annotation); 
+      }
+  
+      message = { 
+        type: "add-focus", 
+        loading: true,
+        names: names,
+        ids: ids,
+      }; 
+    }
   }; 
 
   figma.ui.postMessage(message); 
