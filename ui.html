@@ -7,11 +7,11 @@
       <div id="order">Order</div>
       <div id="name">Selection Name</div>
       <button id="button-refresh">Tab test</button>
-      <div id="tab-help"> 
+      <!-- <div id="tab-help"> 
           &#8593; <span class="keyboard-mini">Shift</span> + <span class="keyboard-mini">Tab</span> 
           &nbsp; &nbsp; &nbsp; 
           &darr; <span class="keyboard-mini">Tab</span> 
-      </div>
+      </div> -->
 
     </div>
     <div id="zero-state">
@@ -51,7 +51,7 @@ function checkZeroState() {
   document.getElementById("button-load").hidden = (divs.length > 0); 
   document.getElementById("order").innerHTML = (divs.length > 0) ? "Order" : ""; 
   document.getElementById("name").innerHTML = (divs.length > 0) ? "Name" : ""; 
-  // document.getElementById("button-back").hidden = (divs.length <= 0); 
+  document.getElementById("container-labels").style.visibility = (divs.length <= 0) ? "hidden" : "visible"; 
   document.getElementById("button-refresh").hidden = (divs.length <= 0); 
   document.getElementById("button-add").style.width = (divs.length > 0) ? "calc(100% - 25px)" : "calc((100% - 25px)/2)" ;
 }
@@ -65,7 +65,7 @@ function dragOver(ev) {
   var midY = (topY + bottomY) / 2; 
   var hoverPoint = ev.clientY < midY; 
 
-  ev.currentTarget.style.borderTopColor = hoverPoint ? "#1DA0FB" : "#EFEFEF"; 
+  ev.currentTarget.style.borderTopColor = hoverPoint ? "#1DA0FB" : "#FFFFFF"; 
   ev.currentTarget.style.borderTopWidth = hoverPoint ? "3px" : "1px"; 
   ev.currentTarget.style.borderBottomColor = hoverPoint ? "#EFEFEF" : "#1DA0FB"; 
   ev.currentTarget.style.borderBottomWidth = hoverPoint ? "1px" : "3px"; 
@@ -83,8 +83,8 @@ function drop(ev) {
   
   (document.getElementById("app")).insertBefore(toDrop, (hoverPoint) ? ev.currentTarget : ev.currentTarget.nextSibling); 
 
-  toDrop.style.borderTopColor = "#EFEFEF"; 
-  ev.currentTarget.style.borderTopColor = "#EFEFEF"; 
+  toDrop.style.borderTopColor = "#FFFFFF"; 
+  ev.currentTarget.style.borderTopColor = "#FFFFFF"; 
   ev.currentTarget.style.borderTopWidth = "1px"; 
   toDrop.style.borderBottomColor = "#EFEFEF"; 
   ev.currentTarget.style.borderBottomColor = "#EFEFEF"; 
@@ -101,7 +101,7 @@ function dragStart(ev) {
 function dragLeave(ev) {
   ev.preventDefault(); 
   var curTarget = ev.currentTarget; 
-  curTarget.style.borderTopColor = "#EFEFEF"; 
+  curTarget.style.borderTopColor = "#FFFFFF"; 
   curTarget.style.borderTopWidth = "1px"; 
   curTarget.style.borderBottomColor = "#EFEFEF"; 
   curTarget.style.borderBottomWidth = "1px"; 
@@ -159,15 +159,6 @@ function createFocusUI(selectionName, selectionID, loading) {
   newFocus.ondrop = () => {drop(event)}; 
   newFocus.onclick = () => {showFocus(selectionID)}; 
   newFocus.onfocus = () => {showFocus(selectionID)}; 
-  
-  // create move icon
-  var moveIcon = document.createElement("div"); 
-  moveIcon.className = "move-icon"; 
-  for (i = 0; i < 6; i++) {
-    var moveIconDot = document.createElement("div"); 
-    moveIconDot.className = "move-icon-dot"; 
-    moveIcon.appendChild(moveIconDot); 
-  }
 
   // create order number
   var orderNumber = document.createElement("div"); 
@@ -185,11 +176,32 @@ function createFocusUI(selectionName, selectionID, loading) {
   removeButton.innerHTML = "Remove"; 
   removeButton.onclick = () => { removeFocusUI(selectionID) }; 
 
+  // create tab-help button 
+  var tabContainer = document.createElement("div"); 
+  tabContainer.id = "tab-help"; 
+  tabContainer.innerHTML = "<div id='tab-help'> &#8593; <span class='keyboard-mini'>Shift</span> <span class='keyboard-mini'>Tab</span> <br /> &darr; <span class='keyboard-mini'>Tab</span> </div> "; 
+  
+  // var shiftSpan = document.createElement("span"); 
+  // shiftSpan.className = "keyboard-mini"; 
+  // shiftSpan.innerHTML = "Shift"; 
+
+  // var tabSpan = document.createElement("span"); 
+  // tabSpan.className = "keyboard-mini"; 
+  // tabSpan.innerHTML = "Tab"; 
+
+
+
+  // <!-- <div id="tab-help"> 
+  //         &#8593; <span class="keyboard-mini">Shift</span> + <span class="keyboard-mini">Tab</span> 
+  //         &nbsp; &nbsp; &nbsp; 
+  //         &darr; <span class="keyboard-mini">Tab</span> 
+  //     </div> -->
+
   // add everything into the larger div
-  newFocus.appendChild(moveIcon);
   newFocus.appendChild(orderNumber);  
   newFocus.appendChild(name);
   newFocus.appendChild(removeButton);  
+  newFocus.appendChild(tabContainer); 
   
   // add larger div into the plugin pane, annotate and check for zero state 
   document.getElementById('app').appendChild(newFocus); 
@@ -232,16 +244,19 @@ function showFocus(selectionID) {
   }
 }
 
+
+// initiatialization 
 document.getElementById("order").innerHTML = ""; 
 document.getElementById("name").innerHTML = ""; 
+document.getElementById("container-labels").style.visibility = "hidden";  
 document.getElementById('button-refresh').hidden = true;
-document.getElementById('tab-help').hidden = true;
 document.getElementById('button-add').onclick = () => {
   parent.postMessage({ pluginMessage: {type: 'add-focus'}}, '*'); 
 }
 document.getElementById('button-load').onclick = () => {
   parent.postMessage({ pluginMessage: {type: 'load-annotations'}}, '*'); 
 }
+
 
 // document.getElementById('button-back').onclick = () => {
 //   var toggle = document.getElementById('zero-state').hidden; 
@@ -254,7 +269,6 @@ document.getElementById('button-refresh').onclick = () => {
   if (focusedIDs.length > 0) {
     var buttonRefresh = document.getElementById('button-refresh'); 
     var removeButtons = document.getElementsByClassName('button-remove'); 
-    var moveButtons = document.getElementsByClassName('move-icon'); 
     var foci = document.getElementsByClassName('focus-object'); 
     switch (buttonRefresh.innerHTML) {
       case "Tab test":
@@ -262,10 +276,6 @@ document.getElementById('button-refresh').onclick = () => {
         buttonRefresh.innerHTML = "Exit test"; 
         buttonRefresh.className = "button-refresh-exit"; 
         document.getElementById('button-add').hidden = true; 
-        document.getElementById('order').style.visibility = "hidden"; 
-        document.getElementById('name').style.visibility = "hidden"; 
-        document.getElementById('tab-help').hidden = false;
-        for (let m of moveButtons) {m.style.visibility = "hidden"; }; 
         for (let b of removeButtons) {b.hidden = true;}; 
         var i = 1; 
         for (let f of foci) {
@@ -279,11 +289,7 @@ document.getElementById('button-refresh').onclick = () => {
       case "Exit test": 
         buttonRefresh.innerHTML = "Tab test"; 
         buttonRefresh.className = ""; 
-        document.getElementById('tab-help').hidden = true; 
         document.getElementById('button-add').hidden = false; 
-        document.getElementById('order').style.visibility = "visible"; 
-        document.getElementById('name').style.visibility = "visible"; 
-        for (let m of moveButtons) {m.style.visibility = "visible"; }; 
         for (let b of removeButtons) {b.hidden = false;}
         for (let f of foci) {
           f.tabIndex = -1;
@@ -361,9 +367,11 @@ onmessage = (event) => {
     position: sticky; 
     top: 0; 
     background-color: white; 
-    padding: 10px 5px; 
+    padding: 10px 15px; 
+    /* margin: 0px 15px;  */
+    border-bottom: 1px solid #EFEFEF; 
     display: grid; 
-    grid-template-columns: 50px 60px auto 70px; 
+    grid-template-columns: 20px 60px auto 70px; 
     color: #2C2C2C; 
     font-weight: bold;  
   }
@@ -376,28 +384,27 @@ onmessage = (event) => {
 
 
   #order {
-    grid-column-start: 2; 
+    grid-column-start: 1; 
   }
   #name {
     grid-column-start: 3; 
   }
 
   #tab-help {
-    position: absolute; 
-    left: 10px; 
-    top: 12px; 
-    margin-top: 2px; 
-    margin-bottom: 2px; 
+    grid-column-start: 4; 
+    width: 80px; 
+    line-height: 20px; 
+    display: none; 
+    
   }
 
   .keyboard-mini {
     padding: 1px 3px 2px 3px; 
     border-radius: 4px; 
-    background-color: #6B6B6B; 
-    color: white; 
-    margin-right: 2px; 
-    font-weight: normal; 
-
+    background-color: #D5D5D5; 
+    color: 2C2C2C; 
+    font-weight: 300; 
+    font-size: 10px; 
   }
 
  /* ///////////////////////// */
@@ -455,12 +462,28 @@ onmessage = (event) => {
 
 
   .focus-object {
-    padding: 15px 5px; 
+    padding: 10px 0px; 
+    margin: 0px 15px; 
     border-bottom: 1px solid #EFEFEF; 
-    border-top: 1px solid #EFEFEF; 
+    border-top: 1px solid #ffffff; 
     font-weight: normal; 
     display: grid; 
-    grid-template-columns: 50px 60px auto 70px; 
+    grid-template-columns: 20px 60px auto 70px; 
+  }
+
+  .focus-object:focus {
+    outline: none; 
+    color: #2c2c2c; 
+    border-bottom: 1px solid #2c2c2c; 
+    border-top: 1px solid #2c2c2c; 
+  }
+
+.focus-object:focus #tab-help {
+  display: block; 
+}
+
+  .focus-object:hover {
+    cursor: move; 
   }
 
   .tab-on {
@@ -497,7 +520,7 @@ onmessage = (event) => {
   }
 
   .order {
-    grid-column-start: 2; 
+    grid-column-start: 1; 
   }
 
   .name {
@@ -508,6 +531,11 @@ onmessage = (event) => {
   /* // BUTTON STYLING ////*/
   /* /////////////////////// */
 
+
+  #button-refresh:focus, #button-add:focus, #button-load:focus, .button-remove:focus {
+    /* outline: none;  */
+    border: 3px solid "red"; 
+  }
 
   #button-refresh, #button-add, #button-load,#button-refresh:disabled:hover, .button-remove {
     color: white; 
@@ -590,7 +618,6 @@ onmessage = (event) => {
     grid-column-start: 4; 
     background-color: #F36969; 
     border: 1px solid #F36969; 
-    margin: 2px 2px 1px 2px; 
   }
   #button-load:hover {
     color: #1DA0FB; 
