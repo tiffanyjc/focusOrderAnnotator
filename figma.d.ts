@@ -143,7 +143,7 @@ type ManifestMenuItem =
 // These are the top two rows of a 3x3 matrix. This is enough to represent
 // translation, rotation, and skew.
 type Transform = [
-  [number, number, number],
+  [number, number, number], 
   [number, number, number]
 ]
 

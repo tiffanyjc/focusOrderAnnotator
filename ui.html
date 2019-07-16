@@ -181,22 +181,6 @@ function createFocusUI(selectionName, selectionID, loading) {
   tabContainer.id = "tab-help"; 
   tabContainer.innerHTML = "<div id='tab-help'> &#8593; <span class='keyboard-mini'>Shift</span> <span class='keyboard-mini'>Tab</span> <br /> &darr; <span class='keyboard-mini'>Tab</span> </div> "; 
   
-  // var shiftSpan = document.createElement("span"); 
-  // shiftSpan.className = "keyboard-mini"; 
-  // shiftSpan.innerHTML = "Shift"; 
-
-  // var tabSpan = document.createElement("span"); 
-  // tabSpan.className = "keyboard-mini"; 
-  // tabSpan.innerHTML = "Tab"; 
-
-
-
-  // <!-- <div id="tab-help"> 
-  //         &#8593; <span class="keyboard-mini">Shift</span> + <span class="keyboard-mini">Tab</span> 
-  //         &nbsp; &nbsp; &nbsp; 
-  //         &darr; <span class="keyboard-mini">Tab</span> 
-  //     </div> -->
-
   // add everything into the larger div
   newFocus.appendChild(orderNumber);  
   newFocus.appendChild(name);
@@ -472,10 +456,12 @@ onmessage = (event) => {
   }
 
   .focus-object:focus {
+    padding: 10px 15px; 
+    margin: 0px; 
     outline: none; 
     color: #2c2c2c; 
-    border-bottom: 1px solid #2c2c2c; 
-    border-top: 1px solid #2c2c2c; 
+    border: 2px solid #1DA0FB; 
+    border-top: 2px solid #1DA0FB; 
   }
 
 .focus-object:focus #tab-help {

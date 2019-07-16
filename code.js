@@ -1,6 +1,3 @@
-/////////////////////////
-//// FEATURES        ////
-/////////////////////////
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -37,12 +34,40 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
+/**
+ * A simple wrapper around the JS interval to
+ * watch the canvas for changes in a cleaner way.
+ */
+var CanvasWatcher = /** @class */ (function () {
+    function CanvasWatcher() {
+        this.fps = 1000 / 15; // number of times you want to check and update objects per second
+        this.stopCallback = null;
+    }
+    CanvasWatcher.prototype.start = function (callback, stopCallback) {
+        this.id = setInterval(callback, this.fps);
+        if (stopCallback) {
+            this.stopCallback = stopCallback;
+        }
+    };
+    CanvasWatcher.prototype.stop = function () {
+        clearInterval(this.id);
+        if (this.stopCallback) {
+            this.stopCallback();
+        }
+        this.stopCallback = null;
+    };
+    return CanvasWatcher;
+}());
+/////////////////////////
+//// FEATURES        ////
+/////////////////////////
+var canvasWatcher = new CanvasWatcher();
 var annotationWidth = 60;
 var nodeIDToAnnotationNodeID = [];
 var annotationNodes = [];
 figma.showUI(__html__, { width: 375, height: 480 });
 figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, function () {
-    var message, names, ids, selections, _i, selections_1, selection, nodeToAnnotate, rect, text, arrow, arrow2, tabStop, annotation, id, prevNum, nextNum, kvPair, annotationNodeID, annotationNode, child, id, kvPair, annotationNodeID, annotationNode, id, kvPair, annotationNodeID, node, annotationNode, nodes, _a, nodeIDToAnnotationNodeID_1, kv, id, node, nodeToSelect, annotations, names, ids, _b, annotations_1, annotation_1, nodeID, node, order;
+    var message, names, ids, selections, _i, selections_1, selection, nodeToAnnotate, annotation, prevNum, nextNum, annotationNode, child, id, kvPair, annotationNodeID, annotationNode, id, kvPair, annotationNodeID, node, annotationNode, nodeX, nodeY, nodes, _a, nodeIDToAnnotationNodeID_1, kv, id, node, nodeToSelect, annotations, names, ids, _b, annotations_1, annotation_1, nodeID, node, order;
     return __generator(this, function (_c) {
         switch (_c.label) {
             case 0:
@@ -71,85 +96,22 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                 if (!(msg.type === 'create-annotationUI')) return [3 /*break*/, 4];
                 nodeToAnnotate = figma.getNodeById(msg.id);
                 if (!(nodeToAnnotate.getSharedPluginData("a11y", "type") !== "annotation")) return [3 /*break*/, 3];
-                rect = figma.createRectangle();
-                rect.resize(annotationWidth, annotationWidth);
-                rect.cornerRadius = 4;
-                rect.strokeWeight = 2;
-                rect.strokes = [{
-                        color: { r: 1, g: 1, b: 1 },
-                        opacity: 1,
-                        type: "SOLID",
-                        visible: true
-                    }];
-                rect.x = nodeToAnnotate.x - rect.width;
-                rect.y = nodeToAnnotate.y;
-                rect.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
-                rect.name = "Background";
-                text = figma.createText();
-                return [4 /*yield*/, figma.loadFontAsync(text.fontName)];
+                return [4 /*yield*/, createAnnotationUI(msg, nodeToAnnotate)];
             case 2:
-                _c.sent();
-                text.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
-                text.fontSize = 28;
-                text.x = rect.x + 9;
-                text.y = rect.y + 5;
-                text.characters = msg.number.toString();
-                text.name = "Order";
-                arrow = figma.createVector();
-                arrow.strokeWeight = 2;
-                arrow.strokes = [
-                    { type: "SOLID",
-                        visible: true,
-                        opacity: 1,
-                        color: { r: 1, g: 1, b: 1 } }
-                ];
-                arrow.vectorNetwork = {
-                    regions: [],
-                    segments: [{ start: 0, end: 1 }],
-                    vertices: [
-                        { x: 0, y: 0, strokeCap: "ROUND", strokeJoin: "MITER" },
-                        { x: 41, y: 0, strokeCap: "ARROW_LINES", strokeJoin: "MITER" }
-                    ]
-                };
-                arrow.x = rect.x + 10;
-                arrow.y = rect.y + 45;
-                arrow.name = "arrow";
-                arrow2 = figma.createLine();
-                arrow2.strokeWeight = 2;
-                arrow2.strokes = [
-                    { type: "SOLID",
-                        visible: true,
-                        opacity: 1,
-                        color: { r: 1, g: 1, b: 1 } }
-                ];
-                arrow2.resize(14, 0);
-                arrow2.strokeCap = "ROUND";
-                arrow2.rotation = -90;
-                arrow2.x = arrow.x + 41;
-                arrow2.y = arrow.y - 7;
-                tabStop = figma.group([arrow, arrow2], figma.currentPage);
-                tabStop.name = "Tab stop icon";
-                annotation = figma.group([tabStop, text, rect], figma.currentPage);
-                annotation.name = msg.number.toString();
-                annotation.setSharedPluginData("a11y", "type", "annotation");
-                annotation.setSharedPluginData("a11y", "source", msg.id);
+                annotation = _c.sent();
                 nodeToAnnotate.setSharedPluginData("a11y", "type", "object");
                 nodeToAnnotate.setSharedPluginData("a11y", "annotation", annotation.id);
                 annotationNodes.push(annotation);
                 nodeIDToAnnotationNodeID.push([msg.id, annotation.id]);
-                // group all annotation nodes together
                 figma.currentPage.appendChild(annotation);
                 groupAnnotations();
                 _c.label = 3;
             case 3: return [3 /*break*/, 8];
             case 4:
                 if (!(msg.type === 'renumber-annotationUI')) return [3 /*break*/, 7];
-                id = msg.id;
                 prevNum = msg.prevNumber;
                 nextNum = msg.nextNumber;
-                kvPair = nodeIDToAnnotationNodeID.filter(function (kvPair) { return kvPair[0] == id; });
-                annotationNodeID = kvPair[0][1];
-                annotationNode = figma.getNodeById(annotationNodeID);
+                annotationNode = getAnnotationNode(msg.id);
                 if (!(annotationNode != null)) return [3 /*break*/, 6];
                 annotationNode.name = nextNum.toString();
                 child = annotationNode.children[1];
@@ -187,9 +149,10 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                         };
                     }
                     else {
-                        // update annotation position 
-                        annotationNode.x = node.x - annotationWidth;
-                        annotationNode.y = node.y;
+                        nodeX = node.absoluteTransform[0][2];
+                        nodeY = node.absoluteTransform[1][2];
+                        annotationNode.x = nodeX - annotationWidth;
+                        annotationNode.y = nodeY;
                         message = {
                             type: "node-rename",
                             nodeName: node.name,
@@ -245,8 +208,89 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
         }
     });
 }); };
+function getAnnotationNode(id) {
+    var kvPair = nodeIDToAnnotationNodeID.filter(function (kvPair) { return kvPair[0] == id; });
+    var annotationNodeID = kvPair[0][1];
+    var annotationNode = figma.getNodeById(annotationNodeID);
+    return annotationNode;
+}
 function groupAnnotations() {
     var group = figma.group(annotationNodes, figma.currentPage);
     group.name = "**~~ Focus-order annotations ~~**";
 }
 ;
+function createAnnotationUI(msg, nodeToAnnotate) {
+    return __awaiter(this, void 0, void 0, function () {
+        var parentX, parentY, rect, text, arrow, arrow2, tabStop, annotation;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    parentX = nodeToAnnotate.absoluteTransform[0][2];
+                    parentY = nodeToAnnotate.absoluteTransform[1][2];
+                    rect = figma.createRectangle();
+                    rect.resize(annotationWidth, annotationWidth);
+                    rect.cornerRadius = 4;
+                    rect.strokeWeight = 2;
+                    rect.strokes = [{
+                            color: { r: 1, g: 1, b: 1 },
+                            opacity: 1,
+                            type: "SOLID",
+                            visible: true
+                        }];
+                    rect.x = parentX - rect.width;
+                    rect.y = parentY;
+                    rect.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
+                    rect.name = "Background";
+                    text = figma.createText();
+                    return [4 /*yield*/, figma.loadFontAsync(text.fontName)];
+                case 1:
+                    _a.sent();
+                    text.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
+                    text.fontSize = 28;
+                    text.x = rect.x + 9;
+                    text.y = rect.y + 5;
+                    text.characters = msg.number.toString();
+                    text.name = "Order";
+                    arrow = figma.createVector();
+                    arrow.strokeWeight = 2;
+                    arrow.strokes = [
+                        { type: "SOLID",
+                            visible: true,
+                            opacity: 1,
+                            color: { r: 1, g: 1, b: 1 } }
+                    ];
+                    arrow.vectorNetwork = {
+                        regions: [],
+                        segments: [{ start: 0, end: 1 }],
+                        vertices: [
+                            { x: 0, y: 0, strokeCap: "ROUND", strokeJoin: "MITER" },
+                            { x: 41, y: 0, strokeCap: "ARROW_LINES", strokeJoin: "MITER" }
+                        ]
+                    };
+                    arrow.x = rect.x + 10;
+                    arrow.y = rect.y + 45;
+                    arrow.name = "arrow";
+                    arrow2 = figma.createLine();
+                    arrow2.strokeWeight = 2;
+                    arrow2.strokes = [
+                        { type: "SOLID",
+                            visible: true,
+                            opacity: 1,
+                            color: { r: 1, g: 1, b: 1 } }
+                    ];
+                    arrow2.resize(14, 0);
+                    arrow2.strokeCap = "ROUND";
+                    arrow2.rotation = -90;
+                    arrow2.x = arrow.x + 41;
+                    arrow2.y = arrow.y - 7;
+                    tabStop = figma.group([arrow, arrow2], figma.currentPage);
+                    tabStop.name = "Tab stop icon";
+                    annotation = figma.group([tabStop, text, rect], figma.currentPage);
+                    annotation.name = msg.number.toString();
+                    annotation.setSharedPluginData("a11y", "type", "annotation");
+                    annotation.setSharedPluginData("a11y", "source", msg.id);
+                    return [2 /*return*/, annotation];
+            }
+        });
+    });
+}
