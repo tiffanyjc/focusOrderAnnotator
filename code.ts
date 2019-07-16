@@ -33,6 +33,7 @@ let canvasWatcher = new CanvasWatcher();
 var annotationWidth = 60; 
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
+var annotationLayerName = "**~~ Focus-order annotations ~~**"; 
 
 figma.showUI(__html__, {width: 375, height: 480 });
 figma.ui.onmessage = async (msg) => {
@@ -135,6 +136,7 @@ figma.ui.onmessage = async (msg) => {
     var nodeToSelect = figma.getNodeById(msg.id); 
     figma.currentPage.selection = [nodeToSelect]; 
   } else if (msg.type === 'load-annotations') {
+    annotationLayerName = figma.currentPage.selection[0].name; 
     var annotations = (<FrameNode> figma.currentPage.selection[0]).children; 
     var names = new Array(annotations.length - 1); 
     var ids = new Array(annotations.length - 1); 
@@ -177,7 +179,7 @@ function getAnnotationNode(id) {
 
 function groupAnnotations() {
   var group = figma.group(annotationNodes, figma.currentPage); 
-  group.name = "**~~ Focus-order annotations ~~**"; 
+  group.name = annotationLayerName; 
 }; 
 
 async function createAnnotationUI(msg, nodeToAnnotate) {
