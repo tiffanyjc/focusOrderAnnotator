@@ -1,35 +1,7 @@
-/**
- * A simple wrapper around the JS interval to 
- * watch the canvas for changes in a cleaner way.
- */
-class CanvasWatcher {
-
-  private id: number;
-  private fps = 1000 / 15; // number of times you want to check and update objects per second
-  private stopCallback: Function = null;
-
-  public start(callback: Function, stopCallback?: Function) {
-    this.id = setInterval(callback, this.fps);
-    if (stopCallback) {
-      this.stopCallback = stopCallback;
-    }
-  }
-
-  public stop() {
-    clearInterval(this.id);
-    if (this.stopCallback) {
-      this.stopCallback();
-    }
-    this.stopCallback = null;
-  }
-
-}
-
 /////////////////////////
-//// FEATURES        ////
+////  RECEIVE CALLS   ////
 /////////////////////////
 
-let canvasWatcher = new CanvasWatcher();
 var annotationWidth = 60; 
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
@@ -83,13 +55,12 @@ figma.ui.onmessage = async (msg) => {
       var child = <TextNode> annotationNode.children[1];
       await figma.loadFontAsync(child.fontName as FontName); 
       child.characters = nextNum.toString();   
+      figma.getNodeById(msg.id).setSharedPluginData("a11y", "tabindex", nextNum.toString()); 
       groupAnnotations(); 
     }
 
-    
   } else if (msg.type === 'remove-annotationUI') {
     var id = msg.id; 
-
     var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
     var annotationNodeID = kvPair[0][1]; 
     var annotationNode = <FrameNode> figma.getNodeById(annotationNodeID); 
@@ -97,7 +68,12 @@ figma.ui.onmessage = async (msg) => {
     if (annotationNode != null) { annotationNode.remove(); }; 
     annotationNodes = annotationNodes.filter((a) => {return a.id != annotationNodeID}); 
     annotationNodes = annotationNodes.filter((a) => {return a != null}); 
-    nodeIDToAnnotationNodeID = nodeIDToAnnotationNodeID.filter((kv) => {return kv[0] != id}); 
+    nodeIDToAnnotationNodeID = nodeIDToAnnotationNodeID.filter((kv) => {return kv[0] != id});
+    
+    var node = <FrameNode> figma.getNodeById(id); 
+    if (node != null) {
+      node.setSharedPluginData("a11y", "tabindex", "-1"); 
+    }
   } else if (msg.type === 'refresh-annotationUI') {
     var id = msg.id; 
     var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
@@ -112,7 +88,6 @@ figma.ui.onmessage = async (msg) => {
       }; 
     } else {
       // update annotation position 
-
       var nodeX = node.absoluteTransform[0][2];
       var nodeY = node.absoluteTransform[1][2];
       annotationNode.x = nodeX - annotationWidth; 
@@ -169,23 +144,26 @@ figma.ui.onmessage = async (msg) => {
   figma.ui.postMessage(message); 
 };
 
+/////////////////////////
+////  HELPER FXNS   ////
+/////////////////////////
+
 function getAnnotationNode(id) {
   var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
   var annotationNodeID = kvPair[0][1]; 
   var annotationNode = <FrameNode> figma.getNodeById(annotationNodeID); 
-
   return annotationNode; 
 }
 
 function groupAnnotations() {
   var group = figma.group(annotationNodes, figma.currentPage); 
   group.name = annotationLayerName; 
+  group.setSharedPluginData("a11y", "type", "annotation"); 
 }; 
 
 async function createAnnotationUI(msg, nodeToAnnotate) {
   var parentX = nodeToAnnotate.absoluteTransform[0][2]; 
   var parentY = nodeToAnnotate.absoluteTransform[1][2]; 
-
 
   var rect = figma.createRectangle(); 
   rect.resize(annotationWidth, annotationWidth); 
@@ -251,6 +229,7 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   var annotation = figma.group([tabStop, text, rect], figma.currentPage); 
   annotation.name = msg.number.toString(); 
 
+  nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
   annotation.setSharedPluginData("a11y", "type", "annotation"); 
   annotation.setSharedPluginData("a11y", "source", msg.id); 
 

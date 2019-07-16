@@ -1,3 +1,6 @@
+/////////////////////////
+////  RECEIVE CALLS   ////
+/////////////////////////
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -34,41 +37,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-/**
- * A simple wrapper around the JS interval to
- * watch the canvas for changes in a cleaner way.
- */
-var CanvasWatcher = /** @class */ (function () {
-    function CanvasWatcher() {
-        this.fps = 1000 / 15; // number of times you want to check and update objects per second
-        this.stopCallback = null;
-    }
-    CanvasWatcher.prototype.start = function (callback, stopCallback) {
-        this.id = setInterval(callback, this.fps);
-        if (stopCallback) {
-            this.stopCallback = stopCallback;
-        }
-    };
-    CanvasWatcher.prototype.stop = function () {
-        clearInterval(this.id);
-        if (this.stopCallback) {
-            this.stopCallback();
-        }
-        this.stopCallback = null;
-    };
-    return CanvasWatcher;
-}());
-/////////////////////////
-//// FEATURES        ////
-/////////////////////////
-var canvasWatcher = new CanvasWatcher();
 var annotationWidth = 60;
 var nodeIDToAnnotationNodeID = [];
 var annotationNodes = [];
 var annotationLayerName = "**~~ Focus-order annotations ~~**";
 figma.showUI(__html__, { width: 375, height: 480 });
 figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, function () {
-    var message, names, ids, selections, _i, selections_1, selection, nodeToAnnotate, annotation, prevNum, nextNum, annotationNode, child, id, kvPair, annotationNodeID, annotationNode, id, kvPair, annotationNodeID, node, annotationNode, nodeX, nodeY, nodes, _a, nodeIDToAnnotationNodeID_1, kv, id, node, nodeToSelect, annotations, names, ids, _b, annotations_1, annotation_1, nodeID, node, order;
+    var message, names, ids, selections, _i, selections_1, selection, nodeToAnnotate, annotation, prevNum, nextNum, annotationNode, child, id, kvPair, annotationNodeID, annotationNode, node, id, kvPair, annotationNodeID, node, annotationNode, nodeX, nodeY, nodes, _a, nodeIDToAnnotationNodeID_1, kv, id, node, nodeToSelect, annotations, names, ids, _b, annotations_1, annotation_1, nodeID, node, order;
     return __generator(this, function (_c) {
         switch (_c.label) {
             case 0:
@@ -120,6 +95,7 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
             case 5:
                 _c.sent();
                 child.characters = nextNum.toString();
+                figma.getNodeById(msg.id).setSharedPluginData("a11y", "tabindex", nextNum.toString());
                 groupAnnotations();
                 _c.label = 6;
             case 6: return [3 /*break*/, 8];
@@ -136,6 +112,10 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
                     annotationNodes = annotationNodes.filter(function (a) { return a.id != annotationNodeID; });
                     annotationNodes = annotationNodes.filter(function (a) { return a != null; });
                     nodeIDToAnnotationNodeID = nodeIDToAnnotationNodeID.filter(function (kv) { return kv[0] != id; });
+                    node = figma.getNodeById(id);
+                    if (node != null) {
+                        node.setSharedPluginData("a11y", "tabindex", "-1");
+                    }
                 }
                 else if (msg.type === 'refresh-annotationUI') {
                     id = msg.id;
@@ -210,6 +190,9 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
         }
     });
 }); };
+/////////////////////////
+////  HELPER FXNS   ////
+/////////////////////////
 function getAnnotationNode(id) {
     var kvPair = nodeIDToAnnotationNodeID.filter(function (kvPair) { return kvPair[0] == id; });
     var annotationNodeID = kvPair[0][1];
@@ -219,6 +202,7 @@ function getAnnotationNode(id) {
 function groupAnnotations() {
     var group = figma.group(annotationNodes, figma.currentPage);
     group.name = annotationLayerName;
+    group.setSharedPluginData("a11y", "type", "annotation");
 }
 ;
 function createAnnotationUI(msg, nodeToAnnotate) {
@@ -289,6 +273,7 @@ function createAnnotationUI(msg, nodeToAnnotate) {
                     tabStop.name = "Tab stop icon";
                     annotation = figma.group([tabStop, text, rect], figma.currentPage);
                     annotation.name = msg.number.toString();
+                    nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString());
                     annotation.setSharedPluginData("a11y", "type", "annotation");
                     annotation.setSharedPluginData("a11y", "source", msg.id);
                     return [2 /*return*/, annotation];
