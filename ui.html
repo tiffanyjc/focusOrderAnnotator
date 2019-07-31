@@ -19,7 +19,7 @@
           <b>Getting Started</b>
         </p> -->
         <p>
-          <span id="add-mini">Add</span> annotations to objects. Annotations will auto-update their position, name, and order as you make changes to your designs. 
+          <span id="add-mini">Annotate</span> your designs. Annotations will auto-update their position, name, and order as you make changes to your designs. 
         </p>
         <p>
           <span id="load-mini">Load</span> an existing layer of annotations to continue making edits. 
@@ -33,8 +33,8 @@
     </div>
     <!-- <button id="button-refresh">Load selected annotation layer</button> -->
 
-    <button id="button-load">Load selected annotation layer</button>
-    <button id="button-add">Add selection(s) to new layer</button>
+    <button id="button-load">Load annotations layer</button>
+    <button id="button-add">Annotate selection(s)</button>
     
 </div>
 
@@ -264,6 +264,7 @@ document.getElementById('button-refresh').onclick = () => {
         var i = 1; 
         for (let f of foci) {
           f.tabIndex = i; 
+          f.className = "focus-object"; 
           if (i == 1) {
             f.focus(); 
           }
@@ -276,7 +277,7 @@ document.getElementById('button-refresh').onclick = () => {
         document.getElementById('button-add').hidden = false; 
         for (let b of removeButtons) {b.hidden = false;}
         for (let f of foci) {
-          f.tabIndex = -1;
+          f.removeAttribute("tabIndex"); 
           f.className = "focus-object"; 
         }
         break; 
@@ -286,15 +287,21 @@ document.getElementById('button-refresh').onclick = () => {
 }
 
 if (!document.hasFocus()) { 
+  parent.postMessage({ pluginMessage: { type: 'window-blur' } }, '*');
   for (let selectionID of focusedIDs) {
     parent.postMessage({ pluginMessage: {type: 'refresh-annotationUI', id: selectionID}}, '*'); 
   }
 }
 
 window.addEventListener('focus', () => {
+  parent.postMessage({ pluginMessage: { type: 'window-focus' } }, '*');
   for (let selectionID of focusedIDs) {
     parent.postMessage({ pluginMessage: {type: 'refresh-annotationUI', id: selectionID}}, '*'); 
   }
+});
+
+window.addEventListener('blur', () => {
+  parent.postMessage({ pluginMessage: { type: 'window-blur' } }, '*');
 });
 
 //////////////////////////////////
@@ -322,6 +329,9 @@ onmessage = (event) => {
     }
   } else if (message.type === 'node-remove') {
     removeFocusUI(message.id); 
+  } else if (message.type === 'update-buttons') {
+    document.getElementById('button-add').disabled = message.isDisabled; 
+    document.getElementById('button-load').disabled = message.isDisabled; 
   }
 }
 
@@ -464,6 +474,7 @@ onmessage = (event) => {
     border-top: 2px solid #1DA0FB; 
   }
 
+
 .focus-object:focus #tab-help {
   display: block; 
 }
@@ -533,8 +544,18 @@ onmessage = (event) => {
     height: 30px; 
   }
 
-  #button-refresh:disabled:hover, #button-add:disabled:hover {
+  #button-refresh:disabled:hover, #button-add:disabled:hover, #button-load:disabled:hover {
     cursor: default; 
+  }
+
+  #button-add:disabled, #button-add:disabled:hover{
+    background-color: #929292;  
+    border:1px solid white; 
+  }
+
+  #button-load:disabled, #button-load:disabled:hover {
+    border-color: #929292; 
+    color: #929292; 
   }
 
   #button-back {
@@ -558,6 +579,9 @@ onmessage = (event) => {
     position: fixed; 
     bottom: 0px; 
     right: 0px; 
+    background-color: white; 
+    color: #1DA0FB; 
+    border: 1px solid #1DA0FB; 
   }
   #button-add {
     grid-column-start: 1; 
@@ -569,13 +593,6 @@ onmessage = (event) => {
   }
   #button-add{
     background-color: #1DA0FB; 
-  }
-
-
-  #button-load {
-    background-color: white; 
-    color: #1DA0FB; 
-    border: 1px solid #1DA0FB; 
   }
   .button-refresh-exit {
     background-color: #F36969 !important; 

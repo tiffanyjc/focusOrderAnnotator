@@ -1,7 +1,35 @@
+/**
+ * A simple wrapper around the JS interval to 
+ * watch the canvas for changes in a cleaner way.
+ */
+class CanvasWatcher {
+
+  private id: number;
+  private fps = 1000 / 15; // number of times you want to check and update objects per second
+  private stopCallback: Function = null;
+
+  public start(callback: Function, stopCallback?: Function) {
+    this.id = setInterval(callback, this.fps);
+    if (stopCallback) {
+      this.stopCallback = stopCallback;
+    }
+  }
+
+  public stop() {
+    clearInterval(this.id);
+    if (this.stopCallback) {
+      this.stopCallback();
+    }
+    this.stopCallback = null;
+  }
+
+}
+
 /////////////////////////
 ////  RECEIVE CALLS   ////
 /////////////////////////
 
+let canvasWatcher = new CanvasWatcher();
 var annotationWidth = 60; 
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
@@ -139,6 +167,10 @@ figma.ui.onmessage = async (msg) => {
         ids: ids,
       }; 
     }
+  } else if (msg.type === 'window-blur') {
+    onCanvasFocus();
+  } else if (msg.type === 'window-focus') {
+    onWindowFocus();
   }; 
 
   figma.ui.postMessage(message); 
@@ -147,6 +179,33 @@ figma.ui.onmessage = async (msg) => {
 /////////////////////////
 ////  HELPER FXNS   ////
 /////////////////////////
+
+function onCanvasFocus() {
+  canvasWatcher.start(updateCanvas, finishUpdating);
+}
+
+function onWindowFocus() {
+  canvasWatcher.stop();
+}
+
+function updateCanvas() {
+  // Check if the states of objects you are watching has changed
+  // Update the properties of objects if necessary
+  
+    var message = { 
+      type: "update-buttons", 
+      isDisabled: !(figma.currentPage.selection.length > 0)
+    }; 
+  
+
+  figma.ui.postMessage(message); 
+}
+
+function finishUpdating() {
+  // Do something after user has finished updating objects
+  // I use this method to recalculate the positions of objects with 
+  // better accuracy since it doesn't need to happen in real time.
+}
 
 function getAnnotationNode(id) {
   var kvPair = nodeIDToAnnotationNodeID.filter((kvPair) => kvPair[0] == id);
