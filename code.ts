@@ -10,7 +10,6 @@ class CanvasUpdater {
   public stop() {
     clearInterval(this.id);
   }
-
 }
 
 /////////////////////////

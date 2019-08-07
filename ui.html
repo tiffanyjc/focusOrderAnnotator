@@ -1,23 +1,11 @@
 <div id="app">
-    <!-- <div id="container-header"> 
-      TAB ORDER ANNOTATION
-    </div> -->
     <div id="container-labels">
-      <!-- <button id="button-back">?</button> -->
       <div id="order">Order</div>
       <div id="name">Selection Name</div>
       <button id="button-refresh">Tab test</button>
-      <!-- <div id="tab-help"> 
-          &#8593; <span class="keyboard-mini">Shift</span> + <span class="keyboard-mini">Tab</span> 
-          &nbsp; &nbsp; &nbsp; 
-          &darr; <span class="keyboard-mini">Tab</span> 
-      </div> -->
 
     </div>
     <div id="zero-state">
-        <!-- <p>
-          <b>Getting Started</b>
-        </p> -->
         <p>
           <span id="add-mini">Annotate</span> your designs. Annotations will auto-update their position, name, and order as you make changes to your designs. 
         </p>
@@ -31,8 +19,6 @@
           <span id="annotation-mini">!</span> This plugin uses metadata to link annotations to nodes, so loading manually-created annotation layers is not allowed. 
         </p>
     </div>
-    <!-- <button id="button-refresh">Load selected annotation layer</button> -->
-
     <button id="button-load">Load annotations layer</button>
     <button id="button-add">Annotate selection(s)</button>
     
@@ -240,13 +226,6 @@ document.getElementById('button-add').onclick = () => {
 document.getElementById('button-load').onclick = () => {
   parent.postMessage({ pluginMessage: {type: 'load-annotations'}}, '*'); 
 }
-
-
-// document.getElementById('button-back').onclick = () => {
-//   var toggle = document.getElementById('zero-state').hidden; 
-//   document.getElementById('zero-state').hidden = !toggle; 
-//   document.getElementById('button-back').innerHTML =  (toggle) ? "X" : "?"; 
-// }
 
 document.getElementById('button-refresh').onclick = () => {
 
@@ -530,7 +509,6 @@ onmessage = (event) => {
 
 
   #button-refresh:focus, #button-add:focus, #button-load:focus, .button-remove:focus {
-    /* outline: none;  */
     border: 3px solid "red"; 
   }
 
