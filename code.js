@@ -34,34 +34,21 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-/**
- * A simple wrapper around the JS interval to
- * watch the canvas for changes in a cleaner way.
- */
-var CanvasWatcher = /** @class */ (function () {
-    function CanvasWatcher() {
-        this.fps = 1000 / 15; // number of times you want to check and update objects per second
-        this.stopCallback = null;
+var CanvasUpdater = /** @class */ (function () {
+    function CanvasUpdater() {
     }
-    CanvasWatcher.prototype.start = function (callback, stopCallback) {
-        this.id = setInterval(callback, this.fps);
-        if (stopCallback) {
-            this.stopCallback = stopCallback;
-        }
+    CanvasUpdater.prototype.start = function (callback) {
+        this.id = setInterval(callback, 1000 / 15);
     };
-    CanvasWatcher.prototype.stop = function () {
+    CanvasUpdater.prototype.stop = function () {
         clearInterval(this.id);
-        if (this.stopCallback) {
-            this.stopCallback();
-        }
-        this.stopCallback = null;
     };
-    return CanvasWatcher;
+    return CanvasUpdater;
 }());
 /////////////////////////
 ////  RECEIVE CALLS   ////
 /////////////////////////
-var canvasWatcher = new CanvasWatcher();
+var canvasUpdater = new CanvasUpdater();
 var annotationWidth = 60;
 var nodeIDToAnnotationNodeID = [];
 var annotationNodes = [];
@@ -225,24 +212,17 @@ figma.ui.onmessage = function (msg) { return __awaiter(_this, void 0, void 0, fu
 ////  HELPER FXNS   ////
 /////////////////////////
 function onCanvasFocus() {
-    canvasWatcher.start(updateCanvas, finishUpdating);
+    canvasUpdater.start(updateButtons);
 }
 function onWindowFocus() {
-    canvasWatcher.stop();
+    canvasUpdater.stop();
 }
-function updateCanvas() {
-    // Check if the states of objects you are watching has changed
-    // Update the properties of objects if necessary
+function updateButtons() {
     var message = {
         type: "update-buttons",
         isDisabled: !(figma.currentPage.selection.length > 0)
     };
     figma.ui.postMessage(message);
-}
-function finishUpdating() {
-    // Do something after user has finished updating objects
-    // I use this method to recalculate the positions of objects with 
-    // better accuracy since it doesn't need to happen in real time.
 }
 function getAnnotationNode(id) {
     var kvPair = nodeIDToAnnotationNodeID.filter(function (kvPair) { return kvPair[0] == id; });
