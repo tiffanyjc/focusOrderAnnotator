@@ -176,9 +176,22 @@ function onWindowFocus() {
 }
 
 function updateButtons() {
+    var loadButton = false; 
+    var addButton = false; 
+    if (figma.currentPage.selection.length == 1) {
+      if (figma.currentPage.selection[0].getSharedPluginData("a11y", "type") == "annotation") {
+        loadButton = true; 
+      } else {
+        addButton = true; 
+      }
+    } else if (figma.currentPage.selection.length > 1) {
+      addButton = true; 
+    }
+
     var message = { 
       type: "update-buttons", 
-      isDisabled: !(figma.currentPage.selection.length > 0)
+      isDisabled: !addButton,
+      loadButtonDisabled: !loadButton
     }; 
   figma.ui.postMessage(message); 
 }
@@ -263,7 +276,7 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
 
   var annotation = figma.group([tabStop, text, rect], figma.currentPage); 
   annotation.name = msg.number.toString(); 
-
+ 
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
   annotation.setSharedPluginData("a11y", "type", "annotation"); 
   annotation.setSharedPluginData("a11y", "source", msg.id); 
