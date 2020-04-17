@@ -19,7 +19,7 @@ class CanvasUpdater {
 ////  RECEIVE CALLS   ////
 /////////////////////////
 let canvasUpdater = new CanvasUpdater();
-var annotationWidth = 60;
+var annotationWidth = 30;
 var nodeIDToAnnotationNodeID = [];
 var annotationNodes = [];
 var annotationLayerName = "**~~ Focus-order annotations ~~**";
@@ -209,22 +209,22 @@ function createAnnotationUI(msg, nodeToAnnotate) {
         var parentY = nodeToAnnotate.absoluteTransform[1][2];
         var rect = figma.createRectangle();
         rect.resize(annotationWidth, annotationWidth);
-        rect.cornerRadius = 4;
+        rect.cornerRadius = 6;
         rect.strokeWeight = 2;
         rect.strokes = [{
-                color: { r: 1, g: 1, b: 1 },
+                color: { r: 1, g: 0, b: 0 },
                 opacity: 1,
                 type: "SOLID",
                 visible: true
             }];
         rect.x = parentX - rect.width;
         rect.y = parentY;
-        rect.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
+        rect.fills = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0 } }];
         rect.name = "Background";
         var text = figma.createText();
         yield figma.loadFontAsync(text.fontName);
-        text.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
-        text.fontSize = 28;
+        text.fills = [{ type: 'SOLID', color: { r: 1, g: 0, b: 1 } }];
+        text.fontSize = 16;
         text.x = rect.x + 9;
         text.y = rect.y + 5;
         text.characters = msg.number.toString();
@@ -261,8 +261,9 @@ function createAnnotationUI(msg, nodeToAnnotate) {
         arrow2.rotation = -90;
         arrow2.x = arrow.x + 41;
         arrow2.y = arrow.y - 7;
-        var tabStop = figma.group([arrow, arrow2], figma.currentPage);
-        tabStop.name = "Tab stop icon";
+        // var tabStop = figma.group([arrow, arrow2], figma.currentPage); 
+        var tabStop = figma.group([arrow], figma.currentPage);
+        tabStop.name = "Tab stop ikon";
         var annotation = figma.group([tabStop, text, rect], figma.currentPage);
         annotation.name = msg.number.toString();
         nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString());

@@ -17,7 +17,7 @@ class CanvasUpdater {
 /////////////////////////
 
 let canvasUpdater = new CanvasUpdater();
-var annotationWidth = 60; 
+var annotationWidth = 30; 
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
 var annotationLayerName = "**~~ Focus-order annotations ~~**"; 
@@ -213,68 +213,30 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   var parentX = nodeToAnnotate.absoluteTransform[0][2]; 
   var parentY = nodeToAnnotate.absoluteTransform[1][2]; 
 
-  var rect = figma.createRectangle(); 
-  rect.resize(annotationWidth, annotationWidth); 
-  rect.cornerRadius = 4; 
-  rect.strokeWeight = 2; 
-  rect.strokes = [{
-    color: {r: 1, g: 1, b: 1},
-    opacity: 1,
-    type: "SOLID",
-    visible: true}]
+    var rect = figma.createEllipse(); 
+    rect.resize(annotationWidth, annotationWidth); 
+    rect.strokeWeight = 2; 
+    rect.strokes = [{
+      color: {r: 1, g: 1, b: 1},
+      opacity: 1,
+      type: "SOLID",
+      visible: true}]
   
   rect.x = parentX - rect.width; 
   rect.y = parentY; 
-  rect.fills = [{type: 'SOLID', color: {r: 0, g: 0, b: 0}}];
+  rect.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
   rect.name = "Background"; 
 
   var text = figma.createText(); 
   await figma.loadFontAsync(text.fontName as FontName); 
   text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
-  text.fontSize = 28;
+  text.fontSize = 16;
   text.x = rect.x + 9; 
   text.y = rect.y + 5;  
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
 
-  var arrow = figma.createVector(); 
-  arrow.strokeWeight = 2;
-  arrow.strokes = [
-    {type: "SOLID",
-    visible: true,
-    opacity: 1, 
-    color: {r: 1, g: 1, b: 1}}
-  ]; 
-  arrow.vectorNetwork = {
-    regions: [],
-    segments: [{start: 0, end: 1}], 
-    vertices: [
-      {x: 0, y: 0, strokeCap: "ROUND", strokeJoin: "MITER"},
-      {x: 41, y: 0, strokeCap: "ARROW_LINES", strokeJoin: "MITER"}
-    ]
-  }; 
-  arrow.x = rect.x + 10; 
-  arrow.y = rect.y + 45;  
-  arrow.name = "arrow"; 
-
-  var arrow2 = figma.createLine(); 
-  arrow2.strokeWeight = 2;
-  arrow2.strokes = [
-    {type: "SOLID",
-    visible: true,
-    opacity: 1, 
-    color: {r: 1, g: 1, b: 1}}
-  ]; 
-  arrow2.resize(14, 0); 
-  arrow2.strokeCap = "ROUND"; 
-  arrow2.rotation = -90; 
-  arrow2.x = arrow.x + 41; 
-  arrow2.y = arrow.y - 7; 
-
-  var tabStop = figma.group([arrow, arrow2], figma.currentPage); 
-  tabStop.name = "Tab stop icon"; 
-
-  var annotation = figma.group([tabStop, text, rect], figma.currentPage); 
+  var annotation = figma.group([text, rect], figma.currentPage); 
   annotation.name = msg.number.toString(); 
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
