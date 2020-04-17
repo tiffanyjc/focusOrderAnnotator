@@ -17,7 +17,7 @@ class CanvasUpdater {
 /////////////////////////
 
 let canvasUpdater = new CanvasUpdater();
-var annotationWidth = 30; 
+var annotationWidth = 26; 
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
 var annotationLayerName = "**~~ Focus-order annotations ~~**"; 
@@ -222,15 +222,15 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
       type: "SOLID",
       visible: true}]
   
-  rect.x = parentX - rect.width; 
-  rect.y = parentY; 
+  rect.x = parentX - rect.width/2; 
+  rect.y = parentY - rect.width/2; 
   rect.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
   rect.name = "Background"; 
 
   var text = figma.createText(); 
   await figma.loadFontAsync(text.fontName as FontName); 
   text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
-  text.fontSize = 16;
+  text.fontSize = 12;
   text.x = rect.x + 9; 
   text.y = rect.y + 5;  
   text.characters = msg.number.toString(); 
