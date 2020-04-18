@@ -250,8 +250,9 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     opacity: 1,
     type: "SOLID",
     visible: true}]
+    border.fills = []
 
-  var annotation = figma.group([text, rect, border], figma.currentPage); 
+  var annotation = figma.group([border, text, rect], figma.currentPage); 
   annotation.name = msg.number.toString(); 
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
