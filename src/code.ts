@@ -167,6 +167,8 @@ figma.ui.onmessage = async (msg) => {
 ////  HELPER FXNS   ////
 /////////////////////////
 
+const selection = figma.currentPage.selection[0]
+
 function onCanvasFocus() {
   canvasUpdater.start(updateButtons);
 }
@@ -217,9 +219,11 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   var borderH = 100;
 
   var border = figma.createRectangle();
-  border.x = parentX;
-  border.y = parentY;
+  ///////////FIX
+  border.x = parentX
+  border.y = parentY
   border.resize(borderW, borderH);
+  ///////////FIX
   border.strokeWeight = 2;
   border.strokeAlign = 'OUTSIDE';
   border.cornerRadius = 4;
@@ -230,64 +234,50 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     visible: true}];
     border.fills = [];
     border.name = "Border 1";
-    // border.constraints = {horizontal: 'STRETCH', vertical: 'STRETCH'}
 
-    var border2 = figma.createRectangle();
+  var border2 = figma.createRectangle();
+  ///////////FIX
+  border2.x = parentX;
+  border2.y = parentY;
+  border.resize(borderW, borderH);
+  ///////////FIX
+  border2.strokeWeight = 2;
+  border2.cornerRadius = 4;
+  border2.strokes = [{ 
+    color: {r: 1, g: 1, b: 1},
+    opacity: 1,
+    type: "SOLID",
+    visible: true}];
+    border2.fills = [];
+    border2.name = "Border 2";
 
-    border2.x = parentX;
-    border2.y = parentY;
-    border2.resize(borderW, borderH);
-
-    border2.strokeWeight = 2;
-    border2.strokeAlign = 'INSIDE'
-    border2.cornerRadius = 4;
-    border2.strokes = [{ 
+    var rect = figma.createEllipse(); 
+    rect.resize(annotationWidth, annotationWidth); 
+    rect.strokeWeight = 2; 
+    rect.strokes = [{
       color: {r: 1, g: 1, b: 1},
       opacity: 1,
       type: "SOLID",
-      visible: true}];
-      border2.fills = [];
-      border2.name = "Border 2"
-      // border2.constraints = {horizontal: 'STRETCH', vertical: 'STRETCH'}
-
-    var ellipse = figma.createEllipse(); 
-    ellipse.resize(annotationWidth, annotationWidth); 
-    ellipse.strokeWeight = 2; 
-    ellipse.strokes = [{
-      color: {r: 1, g: 1, b: 1},
-      opacity: 1,
-      type: "SOLID",
-      visible: true}];
+      visible: true}]
   
-  ellipse.x = parentX - ellipse.width/2 + 2; 
-  ellipse.y = parentY - ellipse.width/2 + 2; 
-  ellipse.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
-  // ellipse.constraints = {horizontal: 'MIN', vertical: 'MIN'}
-  ellipse.name = "Number background"; 
+  rect.x = parentX - rect.width/2 + 2; 
+  rect.y = parentY - rect.width/2 + 2; 
+  rect.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
+  rect.name = "Ellipse background"; 
 
   var text = figma.createText(); 
   await figma.loadFontAsync(text.fontName as FontName); 
   text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
   text.fontSize = 12;
-  
-  text.x = ellipse.x + 10; 
-  text.y = ellipse.y + 6;  
-  // text.constraints = {horizontal: 'MIN', vertical: 'MIN'}
+  text.x = rect.x + 10; 
+  text.y = rect.y + 6;  
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
 
-  var annotation = figma.group([ border, border2, ellipse, text ], figma.currentPage); 
-
-  // //frame code. Why is it hidden?
-  // const annotation = figma.createFrame();
-  // annotation.backgrounds = []
-  // annotation.clipsContent = false
-  // annotation.appendChild(border)
-  // annotation.appendChild(border2)
-  // annotation.appendChild(ellipse)
-  // annotation.appendChild(text)
-
+  var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
+  var annotation = figma.group([ focusBorder, text, rect ], figma.currentPage); 
   annotation.name = msg.number.toString(); 
+ 
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
   annotation.setSharedPluginData("a11y", "type", "annotation"); 
   annotation.setSharedPluginData("a11y", "source", msg.id); 
