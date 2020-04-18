@@ -167,6 +167,8 @@ figma.ui.onmessage = async (msg) => {
 ////  HELPER FXNS   ////
 /////////////////////////
 
+const selection = figma.currentPage.selection[0]
+
 function onCanvasFocus() {
   canvasUpdater.start(updateButtons);
 }
@@ -236,7 +238,20 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
 
-  var annotation = figma.group([text, rect], figma.currentPage); 
+  var border = figma.createRectangle();
+  ///////////FIX
+  border.x = parentX
+  border.y = parentY
+  border.resize(200, 200)
+  ///////////FIX
+  border.strokeWeight = 2;
+  border.strokes = [{ 
+    color: {r: .76, g: .15, b: .87},
+    opacity: 1,
+    type: "SOLID",
+    visible: true}]
+
+  var annotation = figma.group([text, rect, border], figma.currentPage); 
   annotation.name = msg.number.toString(); 
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
