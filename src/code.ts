@@ -215,15 +215,13 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   var parentX = nodeToAnnotate.absoluteTransform[0][2]; 
   var parentY = nodeToAnnotate.absoluteTransform[1][2]; 
 
-  var borderW = 100;
-  var borderH = 100;
+  var borderW = nodeToAnnotate.width;
+  var borderH = nodeToAnnotate.height;
 
   var border = figma.createRectangle();
-  ///////////FIX
   border.x = parentX
   border.y = parentY
   border.resize(borderW, borderH);
-  ///////////FIX
   border.strokeWeight = 2;
   border.strokeAlign = 'OUTSIDE';
   border.cornerRadius = 4;
@@ -236,11 +234,9 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     border.name = "Border 1";
 
   var border2 = figma.createRectangle();
-  ///////////FIX
   border2.x = parentX;
   border2.y = parentY;
-  border.resize(borderW, borderH);
-  ///////////FIX
+  border2.resize(borderW, borderH);
   border2.strokeWeight = 2;
   border2.cornerRadius = 4;
   border2.strokes = [{ 
@@ -277,7 +273,7 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
   focusBorder.name = "Borders"
   // var annotation = figma.group([ focusBorder, text, circle ], figma.currentPage); 
-  var annotation = figma.group([ focusBorder, text, circle ], figma.currentPage); 
+  var annotation = figma.group([ focusBorder, circle, text ], figma.currentPage); 
   annotation.name = msg.number.toString(); 
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
