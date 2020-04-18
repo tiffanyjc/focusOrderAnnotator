@@ -17,7 +17,7 @@ class CanvasUpdater {
 /////////////////////////
 
 let canvasUpdater = new CanvasUpdater();
-var annotationWidth = 26; 
+var annotationWidth = 28; 
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
 var annotationLayerName = "**~~ Focus-order annotations ~~**"; 
@@ -224,8 +224,8 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
       type: "SOLID",
       visible: true}]
   
-  rect.x = parentX - rect.width/2; 
-  rect.y = parentY - rect.width/2; 
+  rect.x = parentX - rect.width/2 + 2; 
+  rect.y = parentY - rect.width/2 + 2; 
   rect.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
   rect.name = "Background"; 
 
@@ -233,8 +233,8 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   await figma.loadFontAsync(text.fontName as FontName); 
   text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
   text.fontSize = 12;
-  text.x = rect.x + 9; 
-  text.y = rect.y + 5;  
+  text.x = rect.x + 10; 
+  text.y = rect.y + 6;  
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
 
@@ -245,6 +245,7 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   border.resize(200, 200)
   ///////////FIX
   border.strokeWeight = 2;
+  border.cornerRadius = 4;
   border.strokes = [{ 
     color: {r: .76, g: .15, b: .87},
     opacity: 1,
@@ -252,7 +253,22 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     visible: true}]
     border.fills = []
 
-  var annotation = figma.group([border, text, rect], figma.currentPage); 
+    var border2 = figma.createRectangle();
+    ///////////FIX
+    border2.x = parentX + 2
+    border2.y = parentY + 2
+    border2.resize(196, 196)
+    ///////////FIX
+    border2.strokeWeight = 2;
+    border2.cornerRadius = 4;
+    border2.strokes = [{ 
+      color: {r: 1, g: 1, b: 1},
+      opacity: 1,
+      type: "SOLID",
+      visible: true}]
+      border2.fills = []
+
+  var annotation = figma.group([ border, border2, text, rect ], figma.currentPage); 
   annotation.name = msg.number.toString(); 
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
