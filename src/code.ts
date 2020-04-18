@@ -251,31 +251,33 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     border2.fills = [];
     border2.name = "Border 2";
 
-    var rect = figma.createEllipse(); 
-    rect.resize(annotationWidth, annotationWidth); 
-    rect.strokeWeight = 2; 
-    rect.strokes = [{
+    var circle = figma.createEllipse(); 
+    circle.resize(annotationWidth, annotationWidth); 
+    circle.strokeWeight = 2; 
+    circle.strokes = [{
       color: {r: 1, g: 1, b: 1},
       opacity: 1,
       type: "SOLID",
       visible: true}]
   
-  rect.x = parentX - rect.width/2 + 2; 
-  rect.y = parentY - rect.width/2 + 2; 
-  rect.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
-  rect.name = "Ellipse background"; 
+  circle.x = parentX - circle.width/2 + 2; 
+  circle.y = parentY - circle.width/2 + 2; 
+  circle.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
+  circle.name = "Ellipse background"; 
 
   var text = figma.createText(); 
   await figma.loadFontAsync(text.fontName as FontName); 
   text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
   text.fontSize = 12;
-  text.x = rect.x + 10; 
-  text.y = rect.y + 6;  
+  text.x = circle.x + 10; 
+  text.y = circle.y + 6;  
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
 
   var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
-  var annotation = figma.group([ focusBorder, text, rect ], figma.currentPage); 
+  focusBorder.name = "Borders"
+  // var annotation = figma.group([ focusBorder, text, circle ], figma.currentPage); 
+  var annotation = figma.group([ focusBorder, text, circle ], figma.currentPage); 
   annotation.name = msg.number.toString(); 
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
