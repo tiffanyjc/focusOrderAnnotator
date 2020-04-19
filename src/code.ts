@@ -61,7 +61,7 @@ figma.ui.onmessage = async (msg) => {
     }
   } else if (msg.type === 'renumber-annotationUI') {
 
-    var prevNum = msg.prevNumber;  
+    // var prevNum = msg.prevNumber;  
     var nextNum = msg.nextNumber;  
     var annotationNode = getAnnotationNode(msg.id); 
 
@@ -232,6 +232,7 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     visible: true}];
     border.fills = [];
     border.name = "Border 1";
+    border.constraints = {horizontal: 'STRETCH', vertical: 'STRETCH'};
 
   var border2 = figma.createRectangle();
   border2.x = parentX;
@@ -246,6 +247,7 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     visible: true}];
     border2.fills = [];
     border2.name = "Border 2";
+    border2.constraints = {horizontal: 'STRETCH', vertical: 'STRETCH'};
 
     var circle = figma.createEllipse(); 
     circle.resize(annotationWidth, annotationWidth); 
@@ -270,11 +272,20 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
 
-  var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
-  focusBorder.name = "Borders"
-  // var annotation = figma.group([ focusBorder, text, circle ], figma.currentPage); 
-  var annotation = figma.group([ focusBorder, circle, text ], figma.currentPage); 
+  // var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
+  // focusBorder.name = "Borders"
+
+  var annotation = figma.group([ circle, text ], figma.currentPage); 
   annotation.name = msg.number.toString(); 
+  annotation.constraints = {horizontal: 'MIN', vertical: 'MIN'}
+
+    //frame code
+    const tab = figma.createFrame();
+    tab.backgrounds = [];
+    tab.clipsContent = false;
+    tab.appendChild(border);
+    tab.appendChild(border2);
+    tab.appendChild(annotation);
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
   annotation.setSharedPluginData("a11y", "type", "annotation"); 
