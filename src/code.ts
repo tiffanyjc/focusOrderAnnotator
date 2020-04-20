@@ -257,6 +257,7 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
       opacity: 1,
       type: "SOLID",
       visible: true}]
+      circle.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
   
   circle.x = parentX - circle.width/2 + 2; 
   circle.y = parentY - circle.width/2 + 2; 
@@ -271,21 +272,22 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   text.y = circle.y + 6;  
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
+  text.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
 
-  // var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
-  // focusBorder.name = "Borders"
+  var annotation = figma.group([ focusBorder, circle, text ], figma.currentPage); 
+  annotation.name = msg.number.toString();
+  // annotation.constraints = {horizontal: 'MIN', vertical: 'MIN'}; 
 
-  var annotation = figma.group([ circle, text ], figma.currentPage); 
-  annotation.name = msg.number.toString(); 
-  annotation.constraints = {horizontal: 'MIN', vertical: 'MIN'}
-
-    //frame code
-    const tab = figma.createFrame();
-    tab.backgrounds = [];
-    tab.clipsContent = false;
-    tab.appendChild(border);
-    tab.appendChild(border2);
-    tab.appendChild(annotation);
+  var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
+  focusBorder.name = "Borders"
+ 
+    //frame code - USE THIS WHEN REORDER GETS FIXED
+    // const tab = figma.createFrame();
+    // tab.backgrounds = []
+    // tab.clipsContent = false
+    // tab.appendChild(border)
+    // tab.appendChild(border2)
+    // tab.appendChild(annotation)
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
   annotation.setSharedPluginData("a11y", "type", "annotation"); 
