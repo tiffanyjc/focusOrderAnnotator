@@ -67,7 +67,6 @@ figma.ui.onmessage = async (msg) => {
 
     if (annotationNode != null) {
       annotationNode.name = nextNum.toString(); 
-      console.log(annotationNode); 
       var child = <TextNode> annotationNode.children[2];
       await figma.loadFontAsync(child.fontName as FontName); 
       child.characters = nextNum.toString();   
@@ -106,8 +105,8 @@ figma.ui.onmessage = async (msg) => {
       // update annotation position 
       var nodeX = node.absoluteTransform[0][2];
       var nodeY = node.absoluteTransform[1][2];
-      annotationNode.x = nodeX - annotationWidth; 
-      annotationNode.y = nodeY; 
+      annotationNode.x = nodeX - annotationWidth / 2; 
+      annotationNode.y = nodeY - annotationWidth / 2; 
 
       message = { 
         type: "node-rename", 
