@@ -67,7 +67,8 @@ figma.ui.onmessage = async (msg) => {
 
     if (annotationNode != null) {
       annotationNode.name = nextNum.toString(); 
-      var child = <TextNode> annotationNode.children[1];
+      console.log(annotationNode); 
+      var child = <TextNode> annotationNode.children[2];
       await figma.loadFontAsync(child.fontName as FontName); 
       child.characters = nextNum.toString();   
       figma.getNodeById(msg.id).setSharedPluginData("a11y", "tabindex", nextNum.toString()); 
@@ -249,15 +250,18 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     border2.name = "Border 2";
     border2.constraints = {horizontal: 'STRETCH', vertical: 'STRETCH'};
 
-    var circle = figma.createEllipse(); 
-    circle.resize(annotationWidth, annotationWidth); 
-    circle.strokeWeight = 2; 
-    circle.strokes = [{
-      color: {r: 1, g: 1, b: 1},
-      opacity: 1,
-      type: "SOLID",
-      visible: true}]
-      circle.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
+  var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
+  focusBorder.name = "Borders"
+
+  var circle = figma.createEllipse(); 
+  circle.resize(annotationWidth, annotationWidth); 
+  circle.strokeWeight = 2; 
+  circle.strokes = [{
+    color: {r: 1, g: 1, b: 1},
+    opacity: 1,
+    type: "SOLID",
+    visible: true}]
+    circle.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
   
   circle.x = parentX - circle.width/2 + 2; 
   circle.y = parentY - circle.width/2 + 2; 
@@ -274,12 +278,13 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   text.name = "Order"; 
   text.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
 
-  var annotation = figma.group([ focusBorder, circle, text ], figma.currentPage); 
+
+  
+  var annotation = figma.group([circle, text, focusBorder], figma.currentPage); 
   annotation.name = msg.number.toString();
   // annotation.constraints = {horizontal: 'MIN', vertical: 'MIN'}; 
 
-  var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
-  focusBorder.name = "Borders"
+  
  
     //frame code - USE THIS WHEN REORDER GETS FIXED
     // const tab = figma.createFrame();
