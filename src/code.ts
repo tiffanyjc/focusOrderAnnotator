@@ -260,40 +260,40 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
     opacity: 1,
     type: "SOLID",
     visible: true}]  
-  circle.x = parentX - circle.width/2 + 2; 
-  circle.y = parentY - circle.width/2 + 2; 
+  // circle.x = parentX - circle.width/2 + 2; 
+  // circle.y = parentY - circle.width/2 + 2; 
   circle.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
   circle.name = "Ellipse background"; 
-  circle.constraints = {horizontal: 'MIN', vertical: 'MIN'};
+  circle.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
 
   var text = figma.createText(); 
   await figma.loadFontAsync(text.fontName as FontName); 
   text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
   text.fontSize = 12;
-  text.x = circle.x + 11; 
-  text.y = circle.y + 7;  
+  // text.x = circle.x + 11; 
+  // text.y = circle.y + 7;  
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
-  text.constraints = {horizontal: 'MIN', vertical: 'MIN'};
+  text.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
 
-  // var annotation = figma.createFrame();
-  // annotation.backgrounds = [];
-  // annotation.clipsContent = false;
-  // annotation.name = "annotation" + annotation.name
-  // annotation.appendChild(circle);
-  // annotation.appendChild(text);
-  // annotation.constraints = {horizontal: 'MIN', vertical: 'MIN'};
+  var annotation = figma.createFrame();
+  annotation.backgrounds = [];
+  annotation.clipsContent = false;
+  annotation.name = "annotation" + annotation.name
+  annotation.appendChild(circle);
+  annotation.appendChild(text);
+  annotation.constraints = {horizontal: 'MIN', vertical: 'MIN'};
+  annotation.name = msg.number.toString();
 
   // var annotation = figma.group([circle, text, focusBorder], figma.currentPage); 
 
-    var annotation = figma.createFrame();
-    annotation.backgrounds = [];
-    annotation.clipsContent = false;
-    annotation.appendChild(border);
-    annotation.appendChild(border2);
-    annotation.appendChild(circle);
-    annotation.appendChild(text);
-    annotation.name = msg.number.toString();
+    var tab = figma.createFrame();
+    tab.backgrounds = [];
+    tab.clipsContent = false;
+    tab.appendChild(border);
+    tab.appendChild(border2);
+    tab.appendChild(annotation);
+    tab.name = "Tab" + annotation.name
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
   annotation.setSharedPluginData("a11y", "type", "annotation"); 
