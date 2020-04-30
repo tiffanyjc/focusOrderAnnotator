@@ -270,15 +270,18 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   var text = figma.createText(); 
   await figma.loadFontAsync(text.fontName as FontName); 
   text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
+  text.textAlignHorizontal = 'CENTER';
   text.fontSize = 12;
   
-  text.x = circle.x + 10; 
+  text.x = circle.x + 13; 
   text.y = circle.y + 7;  
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
   text.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
 
-  var annotation = figma.group([circle, text, focusBorder], figma.currentPage); 
+var numberCircle = figma.group([circle, text], figma.currentPage);
+
+  var annotation = figma.group([numberCircle, focusBorder], figma.currentPage); 
   annotation.name = msg.number.toString();
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
