@@ -279,9 +279,7 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   text.name = "Order"; 
   text.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
 
-var numberCircle = figma.group([circle, text], figma.currentPage);
-
-  var annotation = figma.group([numberCircle, focusBorder], figma.currentPage); 
+  var annotation = figma.group([circle, text, focusBorder], figma.currentPage); 
   annotation.name = msg.number.toString();
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
