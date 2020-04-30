@@ -17,7 +17,7 @@ class CanvasUpdater {
 /////////////////////////
 
 let canvasUpdater = new CanvasUpdater();
-var annotationWidth = 60; 
+var annotationWidth = 28; 
 var nodeIDToAnnotationNodeID = []; 
 var annotationNodes = []; 
 var annotationLayerName = "**~~ Focus-order annotations ~~**"; 
@@ -61,13 +61,13 @@ figma.ui.onmessage = async (msg) => {
     }
   } else if (msg.type === 'renumber-annotationUI') {
 
-    var prevNum = msg.prevNumber;  
+    // var prevNum = msg.prevNumber;  
     var nextNum = msg.nextNumber;  
     var annotationNode = getAnnotationNode(msg.id); 
 
     if (annotationNode != null) {
       annotationNode.name = nextNum.toString(); 
-      var child = <TextNode> annotationNode.children[1];
+      var child = <TextNode> annotationNode.children[2];
       await figma.loadFontAsync(child.fontName as FontName); 
       child.characters = nextNum.toString();   
       figma.getNodeById(msg.id).setSharedPluginData("a11y", "tabindex", nextNum.toString()); 
@@ -105,8 +105,8 @@ figma.ui.onmessage = async (msg) => {
       // update annotation position 
       var nodeX = node.absoluteTransform[0][2];
       var nodeY = node.absoluteTransform[1][2];
-      annotationNode.x = nodeX - annotationWidth; 
-      annotationNode.y = nodeY; 
+      annotationNode.x = nodeX - annotationWidth / 2; 
+      annotationNode.y = nodeY - annotationWidth / 2; 
 
       message = { 
         type: "node-rename", 
@@ -167,6 +167,8 @@ figma.ui.onmessage = async (msg) => {
 ////  HELPER FXNS   ////
 /////////////////////////
 
+const selection = figma.currentPage.selection[0]
+
 function onCanvasFocus() {
   canvasUpdater.start(updateButtons);
 }
@@ -213,69 +215,72 @@ async function createAnnotationUI(msg, nodeToAnnotate) {
   var parentX = nodeToAnnotate.absoluteTransform[0][2]; 
   var parentY = nodeToAnnotate.absoluteTransform[1][2]; 
 
-  var rect = figma.createRectangle(); 
-  rect.resize(annotationWidth, annotationWidth); 
-  rect.cornerRadius = 4; 
-  rect.strokeWeight = 2; 
-  rect.strokes = [{
+  var borderW = nodeToAnnotate.width;
+  var borderH = nodeToAnnotate.height;
+
+  var border = figma.createRectangle();
+  border.x = parentX
+  border.y = parentY
+  border.resize(borderW, borderH);
+  border.strokeWeight = 2;
+  border.strokeAlign = 'OUTSIDE';
+  border.cornerRadius = 4;
+  border.strokes = [{ 
+    color: {r: .76, g: .15, b: .87},
+    opacity: 1,
+    type: "SOLID",
+    visible: true}];
+    border.fills = [];
+    border.name = "Border 1";
+    border.constraints = {horizontal: 'STRETCH', vertical: 'STRETCH'};
+
+  var border2 = figma.createRectangle();
+  border2.x = parentX;
+  border2.y = parentY;
+  border2.resize(borderW, borderH);
+  border2.strokeWeight = 2;
+  border2.cornerRadius = 4;
+  border2.strokes = [{ 
+    color: {r: 1, g: 1, b: 1},
+    opacity: 1,
+    type: "SOLID",
+    visible: true}];
+    border2.fills = [];
+    border2.name = "Border 2";
+    border2.constraints = {horizontal: 'STRETCH', vertical: 'STRETCH'};
+
+  var focusBorder = figma.group([ border, border2 ], figma.currentPage); 
+  focusBorder.name = "Borders"
+
+  var circle = figma.createEllipse(); 
+  circle.resize(annotationWidth, annotationWidth); 
+  circle.strokeWeight = 2; 
+  circle.strokes = [{
     color: {r: 1, g: 1, b: 1},
     opacity: 1,
     type: "SOLID",
     visible: true}]
+    circle.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
   
-  rect.x = parentX - rect.width; 
-  rect.y = parentY; 
-  rect.fills = [{type: 'SOLID', color: {r: 0, g: 0, b: 0}}];
-  rect.name = "Background"; 
+  circle.x = parentX - circle.width/2 + 2; 
+  circle.y = parentY - circle.width/2 + 2; 
+  circle.fills = [{type: 'SOLID', color: {r: .76, g: .15, b: .87}}];
+  circle.name = "Ellipse background"; 
 
   var text = figma.createText(); 
   await figma.loadFontAsync(text.fontName as FontName); 
   text.fills = [{type: 'SOLID', color: {r: 1, g: 1, b: 1}}];
-  text.fontSize = 28;
-  text.x = rect.x + 9; 
-  text.y = rect.y + 5;  
+  text.textAlignHorizontal = 'CENTER';
+  text.fontSize = 12;
+  
+  text.x = circle.x + 13; 
+  text.y = circle.y + 7;  
   text.characters = msg.number.toString(); 
   text.name = "Order"; 
+  text.constraints = {horizontal: 'CENTER', vertical: 'CENTER'};
 
-  var arrow = figma.createVector(); 
-  arrow.strokeWeight = 2;
-  arrow.strokes = [
-    {type: "SOLID",
-    visible: true,
-    opacity: 1, 
-    color: {r: 1, g: 1, b: 1}}
-  ]; 
-  arrow.vectorNetwork = {
-    regions: [],
-    segments: [{start: 0, end: 1}], 
-    vertices: [
-      {x: 0, y: 0, strokeCap: "ROUND", strokeJoin: "MITER"},
-      {x: 41, y: 0, strokeCap: "ARROW_LINES", strokeJoin: "MITER"}
-    ]
-  }; 
-  arrow.x = rect.x + 10; 
-  arrow.y = rect.y + 45;  
-  arrow.name = "arrow"; 
-
-  var arrow2 = figma.createLine(); 
-  arrow2.strokeWeight = 2;
-  arrow2.strokes = [
-    {type: "SOLID",
-    visible: true,
-    opacity: 1, 
-    color: {r: 1, g: 1, b: 1}}
-  ]; 
-  arrow2.resize(14, 0); 
-  arrow2.strokeCap = "ROUND"; 
-  arrow2.rotation = -90; 
-  arrow2.x = arrow.x + 41; 
-  arrow2.y = arrow.y - 7; 
-
-  var tabStop = figma.group([arrow, arrow2], figma.currentPage); 
-  tabStop.name = "Tab stop icon"; 
-
-  var annotation = figma.group([tabStop, text, rect], figma.currentPage); 
-  annotation.name = msg.number.toString(); 
+  var annotation = figma.group([circle, text, focusBorder], figma.currentPage); 
+  annotation.name = msg.number.toString();
  
   nodeToAnnotate.setSharedPluginData("a11y", "tabindex", msg.number.toString()); 
   annotation.setSharedPluginData("a11y", "type", "annotation"); 

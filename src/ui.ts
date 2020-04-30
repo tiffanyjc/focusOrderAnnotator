@@ -297,6 +297,12 @@ onmessage = (event) => {
       var id = ids.shift(); 
       createFocusUI(name, id, message.loading); 
     } 
+
+    if (message.loading) {
+      for (let selectionID of focusedIDs) {
+        parent.postMessage({ pluginMessage: {type: 'refresh-annotationUI', id: selectionID}}, '*'); 
+      }
+    }
   } else if (message.type === 'node-rename') {
     var divs : any= document.getElementById(message.id).getElementsByTagName("div"); 
 
