@@ -108,6 +108,12 @@ figma.ui.onmessage = async (msg) => {
       annotationNode.x = nodeX - annotationWidth / 2; 
       annotationNode.y = nodeY - annotationWidth / 2; 
 
+
+      // update size 
+
+      var borders = <FrameNode> annotationNode.children.filter(function (child){ return child.name == "Borders"})[0]; 
+      borders.resize(node.width, node.height); 
+      
       message = { 
         type: "node-rename", 
         nodeName: node.name,
